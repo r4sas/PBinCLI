@@ -3,8 +3,10 @@ PBinCLI
 
 PrivateBin CLI (in development)
 
-installing
+Installing
 -----
-virtualenv --python=python3 venv
-. venv/bin/activate
-pip install -r requirements.txt
+```bash
+$ virtualenv --python=python3 venv
+$ . venv/bin/activate
+$ pip install -r requirements.txt
+```
