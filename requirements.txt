@@ -1,2 +1,5 @@
+appdirs
+packaging
+cryptography
 pycryptodome
 requests

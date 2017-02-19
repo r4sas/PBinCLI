@@ -1,35 +1,35 @@
 """Action functions for argparser"""
-import base64
+import json
+import os
 import pbincli.actions
+'''from pbincli.sjcl_gcm import SJCL'''
+import pbincli.sjcl_simple
+from base64 import b64encode
 from Crypto.Hash import SHA256
-from Crypto.Random import get_random_bytes
-from pbincli.sjcl_gcm import SJCL
 from pbincli.transports import privatebin
 from pbincli.utils import PBinCLIException, check_readable, check_writable
 from zlib import compress
-import json
 
 def send(args):
     """ Sub-command for sending paste """
     check_readable(args.filename)
     with open(args.filename, "rb") as f:
         contents = f.read()
-    file = base64.b64encode(compress(contents))
+    file = b64encode(compress(contents))
 
-    passphrase =  base64.b64encode(get_random_bytes(32))
-    if not args.password:
-        password = passphrase
-    else:
+    passphrase = os.urandom(32)
+    print("Passphrase: {}".format(passphrase))
+    if args.password:
         p = SHA256.new()
         p.update(args.password.encode("UTF-8"))
-        password = passphrase + p.hexdigest().encode("UTF-8")
+        passphrase = passphrase + p.hexdigest().encode("UTF-8")
+    print("Password: {}".format(password))
+    print(args.password)
 
-    data = SJCL().encrypt(file, password)
-    #request = "data={}&expire={}&formatter={}&burnafterreading={}&opendiscussion={}".format(json.dumps(data, ensure_ascii=False), args.expire, args.format, int(args.burn), int(args.discus))
+    '''data = SJCL().encrypt(file, password.decode("UTF-8"))'''
+    data = pbincli.sjcl_simple.encrypt(password, file)
     request = {'data':json.dumps(data, ensure_ascii=False),'expire':args.expire,'formatter':args.format,'burnafterreading':int(args.burn),'opendiscussion':int(args.discus)
     }
     print(request)
-
     '''Here we must run function post from pbincli.transports'''
-    print(request)
-    privatebin().post(request)
+    privatebin().post(request, passphrase)
