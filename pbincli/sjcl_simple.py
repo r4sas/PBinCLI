@@ -35,7 +35,7 @@ def decrypt(pwd, json):
 
 
 def encrypt(pwd, plaintext, mode='gcm', algorithm='aes',
-            keysize=256, tagsize=128, iters=256000):
+            keysize=256, tagsize=128, iters=10000):
     ts = tagsize / 8
 
     mode_class = getattr(modes, mode.upper())
@@ -68,7 +68,6 @@ def encrypt(pwd, plaintext, mode='gcm', algorithm='aes',
 
 def _kdf(keysize=256, iters=256000, salt=None, **kwargs):
     kdf_salt = salt or os.urandom(8)
-    print("Salt: {}".format(kdf_salt))
     kdf = PBKDF2HMAC(algorithm=hashes.SHA256(),
                      length=keysize / 8,
                      salt=kdf_salt,
