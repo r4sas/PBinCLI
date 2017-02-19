@@ -133,11 +133,11 @@ class SJCL(object):
         ciphertext = ciphertext + mac
 
         return {
-            "salt": base64.b64encode(salt),
+            "salt": base64.b64encode(salt).decode('UTF-8'),
             "iter": count,
             "ks": dkLen*8,
-            "ct": base64.b64encode(ciphertext),
-            "iv": base64.b64encode(iv),
+            "ct": base64.b64encode(ciphertext).decode('UTF-8'),
+            "iv": base64.b64encode(iv).decode('UTF-8'),
             "cipher": "aes",
             "mode": "gcm",
             "adata": "",
