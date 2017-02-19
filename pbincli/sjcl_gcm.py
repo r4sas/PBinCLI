@@ -2,19 +2,13 @@
 # -*- coding: utf-8 -*-
 
 """
-
-
 Edited SJCL.py library (https://github.com/berlincode/sjcl/)
- for AES.MODE_GCM support, work begin.
+for AES.MODE_GCM support, work begin.
  
- pip3.5 install pycryptodome
-
-
-
+pip3.5 install pycryptodome
 """
 
 from Crypto.Hash import SHA256, HMAC
-#pip3.5 install pycryptodome
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
@@ -112,7 +106,7 @@ class SJCL(object):
 
         return plaintext
 
-    def encrypt(self, plaintext, passphrase, count=1000, dkLen=16):
+    def encrypt(self, plaintext, passphrase, count=10000, dkLen=32):
         # dkLen = key length in bytes
 
         check_mode_gcm()  # check gcm support

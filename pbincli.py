@@ -20,7 +20,7 @@ def main():
     send_parser.add_argument("-e", "--expire", default="1day", action="store", help="expiration of paste (default: 1day)")
     send_parser.add_argument("-f", "--format", default="plaintext", action="store", help="format of paste (default: plaintext)")
     send_parser.add_argument("-p", "--password", default=None, help="password for crypting paste")
-    send_parser.add_argument("filename", type=argparse.FileType('r'), help="filename (example: image.jpg)")
+    send_parser.add_argument("filename", help="filename (example: image.jpg)")
     send_parser.set_defaults(func=pbincli.actions.send)
 
     # parse arguments
