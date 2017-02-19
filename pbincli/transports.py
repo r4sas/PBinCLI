@@ -1,7 +1,7 @@
 import requests
 import json
 import urllib
-
+from pprint import pprint
 class privatebin(object):
 
     def __init__(self):
@@ -13,4 +13,4 @@ class privatebin(object):
         r = requests.post(url=self.server, headers=self.headers, proxies=self.proxies, data=data)
         print(r.request)
         print(r.status_code)
-        print(r.text)
+        print(r.text) 

@@ -7,6 +7,7 @@ from pbincli.sjcl_gcm import SJCL
 from pbincli.transports import privatebin
 from pbincli.utils import PBinCLIException, check_readable, check_writable
 from zlib import compress
+import json
 
 def send(args):
     """ Sub-command for sending paste """
@@ -24,7 +25,11 @@ def send(args):
         password = passphrase + p.hexdigest().encode("UTF-8")
 
     data = SJCL().encrypt(file, password)
-    request = "data={}&expire={}&formatter={}&burnafterreading={}&opendiscussion={}".format(data, args.expire, args.format, int(args.burn), int(args.discus))
+    #request = "data={}&expire={}&formatter={}&burnafterreading={}&opendiscussion={}".format(json.dumps(data, ensure_ascii=False), args.expire, args.format, int(args.burn), int(args.discus))
+    request = {'data':json.dumps(data, ensure_ascii=False),'expire':args.expire,'formatter':args.format,'burnafterreading':int(args.burn),'opendiscussion':int(args.discus)
+    }
+    print(request)
+
     '''Here we must run function post from pbincli.transports'''
     print(request)
     privatebin().post(request)
