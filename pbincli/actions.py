@@ -16,15 +16,15 @@ def path_leaf(path):
 
 
 def send(args):
-    passphrase = os.urandom(32)
+    passphrase = b64encode(os.urandom(32))
     if args.debug: print("Passphrase:\t{}".format(b64encode(passphrase)))
     if args.password:
         p = SHA256.new()
         p.update(args.password.encode("UTF-8"))
-        passphrase = b64encode(passphrase + p.hexdigest().encode("UTF-8"))
+        password = passphrase + p.hexdigest().encode("UTF-8")
     else:
-        passphrase = b64encode(passphrase)
-    if args.debug: print("Password:\t{}".format(passphrase))
+        password = passphrase
+    if args.debug: print("Password:\t{}".format(password))
 
     if args.comment:
         text = b64encode(compress(args.comment))
@@ -41,12 +41,12 @@ def send(args):
         file = b64encode(compress(contents))
         filename = b64encode(compress(path_leaf(args.file)))
 
-        cipherfile = pbincli.sjcl_simple.encrypt(passphrase, file)
-        cipherfilename = pbincli.sjcl_simple.encrypt(passphrase, filename)
+        cipherfile = pbincli.sjcl_simple.encrypt(password, file)
+        cipherfilename = pbincli.sjcl_simple.encrypt(password, filename)
 
     """Sending text from 'data' string"""
     #cipher = SJCL().encrypt(b64encode(text), passphrase)
-    cipher = pbincli.sjcl_simple.encrypt(passphrase, text)
+    cipher = pbincli.sjcl_simple.encrypt(password, text)
     request = {'data':json.dumps(cipher, ensure_ascii=False).replace(' ',''),'expire':args.expire,'formatter':args.format,'burnafterreading':int(args.burn),'opendiscussion':int(args.discus)}
     if cipherfile and cipherfilename:
         request['attachment'] = json.dumps(cipherfile, ensure_ascii=False).replace(' ','')
@@ -59,7 +59,7 @@ def send(args):
     result = json.loads(result)
     """Standart response: {"status":0,"id":"aaabbb","url":"\/?aaabbb","deletetoken":"aaabbbccc"}"""
     if result['status'] == 0:
-        print("Paste uploaded!\nPasteID:\t{}\nPassword:\t{}\nDelete token:\t{}\n\nLink:\t{}?{}#{}".format(result['id'], passphrase.decode("UTF-8"), result['deletetoken'], server, result['id'], passphrase.decode("UTF-8")))
+        print("Paste uploaded!\nPasteID:\t{}\nPassword:\t{}\nDelete token:\t{}\n\nLink:\t{}?{}#{}".format(result['id'], passphrase, result['deletetoken'], server, result['id'], passphrase))
     else:
         print("Something went wrong...\nError:\t{}".format(result['message']))
         sys.exit(1)
@@ -68,8 +68,18 @@ def send(args):
 def get(args):
     paste = args.pasteinfo.split("#")
     if paste[0] and paste[1]:
-        if args.debug: print("PasteID:\t{}\nPassword:\t{}\n".format(paste[0], paste[1]))
-        result = privatebin().get(args.pasteinfo)
+        if args.debug: print("PasteID:\t{}\nPassphrase:\t{}".format(paste[0], paste[1]))
+
+        if args.password:
+            p = SHA256.new()
+            p.update(args.password.encode("UTF-8"))
+            passphrase = paste[1] + p.hexdigest().encode("UTF-8")
+        else:
+            passphrase = paste[1]
+        if args.debug: print("Password:\t{}".format(passphrase))
+
+        result = privatebin().get(paste[0])
+
     else:
         print("PBinCLI error: Incorrect request")
         sys.exit(1)
@@ -79,16 +89,21 @@ def get(args):
     if result['status'] == 0:
         print("Paste received! Text inside:")
         data = pbincli.utils.json_loads_byteified(result['data'])
-        text = pbincli.sjcl_simple.decrypt(paste[1], data)
+        text = pbincli.sjcl_simple.decrypt(passphrase, data)
         #text = pbincli.sjcl_gcm.SJCL().decrypt(daat, paste[1])
         print(decompress(b64decode(text)))
+
+        check_writable("paste.txt")
+        with open("paste.txt", "wb") as f:
+            f.write(decompress(b64decode(text)))
+            f.close
 
         if 'attachment' in result and 'attachmentname' in result:
             print("Found file, attached to paste. Decoding it and saving")
             cipherfile = pbincli.utils.json_loads_byteified(result['attachment']) 
             cipherfilename = pbincli.utils.json_loads_byteified(result['attachmentname'])
-            attachment = pbincli.sjcl_simple.decrypt(paste[1], cipherfile)
-            attachmentname = pbincli.sjcl_simple.decrypt(paste[1], cipherfilename)
+            attachment = pbincli.sjcl_simple.decrypt(passphrase, cipherfile)
+            attachmentname = pbincli.sjcl_simple.decrypt(passphrase, cipherfilename)
             file = decompress(b64decode(attachment))
             filename = decompress(b64decode(attachmentname))
             if args.debug: print("Filename:\t{}\n".format(filename))
@@ -99,8 +114,10 @@ def get(args):
                 f.close
 
         if 'burnafterreading' in result['meta'] and result['meta']['burnafterreading']:
+            print("Burn afrer reading flag found. Deleting paste...")
             result = privatebin().delete(paste[0], 'burnafterreading')
             if args.debug: print("Delete response:\t{}\n".format(result.decode("UTF-8")))
+
     else:
         print("Something went wrong...\nError:\t{}".format(result['message']))
         sys.exit(1)
