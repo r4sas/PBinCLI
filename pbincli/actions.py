@@ -27,7 +27,7 @@ def send(args):
     if args.debug: print("Password:\t{}".format(password))
 
     if args.comment:
-        text = b64encode(compress(args.comment))
+        text = args.comment
     else:
         text = b64encode(compress("Sending file to you!"))
 
@@ -38,8 +38,8 @@ def send(args):
             f.close()
 
         if args.debug: print("Filename:\t{}".format(path_leaf(args.file)))
-        file = b64encode(compress(contents))
-        filename = b64encode(compress(path_leaf(args.file)))
+        file = b64encode(contents)
+        filename = b64encode(path_leaf(args.file))
 
         cipherfile = pbincli.sjcl_simple.encrypt(password, file)
         cipherfilename = pbincli.sjcl_simple.encrypt(password, filename)
@@ -48,9 +48,9 @@ def send(args):
     #cipher = SJCL().encrypt(b64encode(text), passphrase)
     cipher = pbincli.sjcl_simple.encrypt(password, text)
     request = {'data':json.dumps(cipher, ensure_ascii=False).replace(' ',''),'expire':args.expire,'formatter':args.format,'burnafterreading':int(args.burn),'opendiscussion':int(args.discus)}
-    if cipherfile and cipherfilename:
-        request['attachment'] = json.dumps(cipherfile, ensure_ascii=False).replace(' ','')
-        request['attachmentname'] = json.dumps(cipherfilename, ensure_ascii=False).replace(' ','')
+    #if cipherfile and cipherfilename:
+    #    request['attachment'] = json.dumps(cipherfile, ensure_ascii=False).replace(' ','')
+    #    request['attachmentname'] = json.dumps(cipherfilename, ensure_ascii=False).replace(' ','')
 
     if args.debug: print("Request:\t{}".format(request))
 
@@ -91,11 +91,11 @@ def get(args):
         data = pbincli.utils.json_loads_byteified(result['data'])
         text = pbincli.sjcl_simple.decrypt(passphrase, data)
         #text = pbincli.sjcl_gcm.SJCL().decrypt(daat, paste[1])
-        print(decompress(b64decode(text)))
+        print(text)
 
         check_writable("paste.txt")
         with open("paste.txt", "wb") as f:
-            f.write(decompress(b64decode(text)))
+            f.write(text)
             f.close
 
         if 'attachment' in result and 'attachmentname' in result:
