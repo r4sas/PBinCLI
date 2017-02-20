@@ -14,7 +14,7 @@ def decrypt(pwd, json):
     iv = b64decode(json['iv'])
     ct = b64decode(json['ct'])
     salt = b64decode(json['salt'])
-    ts = data['ts'] / 8
+    ts = json['ts'] / 8
 
     tag_start = len(ct) - ts
     tag = ct[tag_start:]
@@ -66,7 +66,7 @@ def encrypt(pwd, plaintext, mode='gcm', algorithm='aes',
     return json
 
 
-def _kdf(keysize=256, iters=256000, salt=None, **kwargs):
+def _kdf(keysize=256, iters=10000, salt=None, **kwargs):
     kdf_salt = salt or os.urandom(8)
     kdf = PBKDF2HMAC(algorithm=hashes.SHA256(),
                      length=keysize / 8,
