@@ -1,8 +1,8 @@
 import requests
-import json
-import urllib
-class privatebin(object):
+#import urllib
 
+
+class privatebin(object):
 
     def __init__(self):
         self.proxies = {'http': 'http://127.0.0.1:4444'}
@@ -21,6 +21,7 @@ class privatebin(object):
         return r.text
 
 
-    def delete(self, request):
+    def delete(self, pasteid, token):
+        request = {'pasteid':pasteid,'deletetoken':token}
         r = requests.post(url=self.server, headers=self.headers, proxies=self.proxies, data=request)
         return r.text

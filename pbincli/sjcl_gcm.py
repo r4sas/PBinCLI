@@ -72,9 +72,9 @@ class SJCL(object):
         if len(salt) != self.salt_size:
             raise Exception("salt should be %d bytes long" % self.salt_size)
 
-        dkLen = data["ks"]//8
-        if dkLen != 16:
-            raise Exception("key length should be 16 bytes")
+        dkLen = data["ks"] / 8
+        if dkLen != 32:
+            raise Exception("key length should be 32 bytes")
 
         key = PBKDF2(
             passphrase,
@@ -86,22 +86,23 @@ class SJCL(object):
 #        print "key", hex_string(key)
 
         ciphertext = base64.b64decode(data["ct"])
+#        ciphertext = data["ct"]
         iv = base64.b64decode(data["iv"])
 #        print AES.block_size
 
         nonce = truncate_iv(iv, len(ciphertext)*8, data["ts"])
 
         # split tag from ciphertext (tag was simply appended to ciphertext)
-        mac = ciphertext[-(data["ts"]//8):]
+        mac = ciphertext[-(data["ts"] / 8):]
 #        print len(ciphertext)
-        ciphertext = ciphertext[:-(data["ts"]//8)]
+        ciphertext = ciphertext[:-(data["ts"] / 8)]
 #        print len(ciphertext)
 #        print len(tag)
 
 #        print "len", len(nonce)
         cipher = AES.new(key, AES.MODE_GCM, nonce)
         plaintext = cipher.decrypt(ciphertext)
-        print(mac)
+#        print(mac)
 #        cipher.verify(mac)
 
         return plaintext
