@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python
 import os
 import sys
 import argparse
@@ -32,6 +32,14 @@ def main():
     get_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
     get_parser.add_argument("-p", "--password", help="password for decrypting paste")
     get_parser.set_defaults(func=pbincli.actions.get)
+
+    delete_parser = subparsers.add_parser("delete", description="Delete paste from PrivateBin instance using token", usage="""
+%(prog)s --paste aabb --token aabbcc"""
+    )
+    delete_parser.add_argument("-p", "--paste", required=True, help="paste id")
+    delete_parser.add_argument("-t", "--token", required=True, help="delete token")
+    delete_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
+    delete_parser.set_defaults(func=pbincli.actions.delete)
 
     # parse arguments
     args = parser.parse_args()

@@ -1,8 +1,7 @@
-"""Action functions for argparser"""
-import json, os, ntpath, sys
+import json, hashlib, ntpath, os, sys
 import pbincli.actions, pbincli.sjcl_simple
+
 from base64 import b64encode, b64decode
-from Crypto.Hash import SHA256
 from mimetypes import guess_type
 from pbincli.transports import privatebin
 from pbincli.utils import PBinCLIException, check_readable, check_writable, json_load_byteified
@@ -24,13 +23,13 @@ def send(args):
         sys.exit(1)
 
     passphrase = b64encode(os.urandom(32))
-    if args.debug: print("Passphrase:\t{}".format(b64encode(passphrase)))
+    if args.debug: print("Passphrase:\t{}".format(passphrase))
     if args.password:
-        p = SHA256.new()
-        p.update(args.password.encode("UTF-8"))
-        password = passphrase + p.hexdigest().encode("UTF-8")
+        digest = hashlib.sha256(args.password.encode("UTF-8")).hexdigest()
+        password = passphrase + digest.encode("UTF-8")
     else:
         password = passphrase
+
     if args.debug: print("Password:\t{}".format(password))
 
     if args.file:
@@ -47,9 +46,9 @@ def send(args):
         cipherfile = pbincli.sjcl_simple.encrypt(password, file)
         cipherfilename = pbincli.sjcl_simple.encrypt(password, filename)
 
-    """Sending text from 'data' string"""
     cipher = pbincli.sjcl_simple.encrypt(password, text)
     request = {'data':json.dumps(cipher, ensure_ascii=False).replace(' ',''),'expire':args.expire,'formatter':args.format,'burnafterreading':int(args.burn),'opendiscussion':int(args.discus)}
+
     if cipherfile and cipherfilename:
         request['attachment'] = json.dumps(cipherfile, ensure_ascii=False).replace(' ','')
         request['attachmentname'] = json.dumps(cipherfilename, ensure_ascii=False).replace(' ','')
@@ -57,42 +56,59 @@ def send(args):
     if args.debug: print("Request:\t{}".format(request))
 
     result, server = privatebin().post(request)
+
     if args.debug: print("Response:\t{}\n".format(result.decode("UTF-8")))
-    result = json.loads(result)
-    """Standart response: {"status":0,"id":"aaabbb","url":"\/?aaabbb","deletetoken":"aaabbbccc"}"""
-    if result['status'] == 0:
+
+    try:
+        result = json.loads(result)
+    except ValueError as e:
+        print("PBinCLI Error: {}".format(e))
+        sys.exit(1)
+
+    if 'status' in result and not result['status']:
         print("Paste uploaded!\nPasteID:\t{}\nPassword:\t{}\nDelete token:\t{}\n\nLink:\t{}?{}#{}".format(result['id'], passphrase, result['deletetoken'], server, result['id'], passphrase))
+    elif 'status' in result and result['status']:
+        print("Something went wrong...\nError:\t\t{}".format(result['message']))
+        sys.exit(1)
     else:
-        print("Something went wrong...\nError:\t{}".format(result['message']))
+        print("Something went wrong...\nError: Empty response.")
         sys.exit(1)
 
 
 def get(args):
-    paste = args.pasteinfo.split("#")
-    if paste[0] and paste[1]:
-        if args.debug: print("PasteID:\t{}\nPassphrase:\t{}".format(paste[0], paste[1]))
+    pasteid, passphrase = args.pasteinfo.split("#")
+
+    if pasteid and passphrase:
+        if args.debug: print("PasteID:\t{}\nPassphrase:\t{}".format(pasteid, passphrase))
 
         if args.password:
-            p = SHA256.new()
-            p.update(args.password.encode("UTF-8"))
-            passphrase = paste[1] + p.hexdigest().encode("UTF-8")
+            digest = hashlib.sha256(args.password.encode("UTF-8")).hexdigest()
+            password = passphrase + digest.encode("UTF-8")
         else:
-            passphrase = paste[1]
-        if args.debug: print("Password:\t{}".format(passphrase))
+            password = passphrase
 
-        result = privatebin().get(paste[0])
+        if args.debug: print("Password:\t{}".format(password))
 
+        result = privatebin().get(pasteid)
     else:
         print("PBinCLI error: Incorrect request")
         sys.exit(1)
+
     if args.debug: print("Response:\t{}\n".format(result.decode("UTF-8")))
 
-    result = json.loads(result)
-    if result['status'] == 0:
+    try:
+        result = json.loads(result)
+    except ValueError as e:
+        print("PBinCLI Error: {}".format(e))
+        sys.exit(1)
+
+    if 'status' in result and not result['status']:
         print("Paste received! Text inside:")
         data = pbincli.utils.json_loads_byteified(result['data'])
+
         if args.debug: print("Text:\t{}".format(data))
-        text = pbincli.sjcl_simple.decrypt(passphrase, data)
+
+        text = pbincli.sjcl_simple.decrypt(password, data)
         print(text)
 
         check_writable("paste.txt")
@@ -102,15 +118,19 @@ def get(args):
 
         if 'attachment' in result and 'attachmentname' in result:
             print("Found file, attached to paste. Decoding it and saving")
+
             cipherfile = pbincli.utils.json_loads_byteified(result['attachment']) 
             cipherfilename = pbincli.utils.json_loads_byteified(result['attachmentname'])
+
             if args.debug: print("Name:\t{}\nData:\t{}".format(cipherfilename, cipherfile))
-            attachmentf = pbincli.sjcl_simple.decrypt(passphrase, cipherfile)
-            attachmentname = pbincli.sjcl_simple.decrypt(passphrase, cipherfilename)
+
+            attachmentf = pbincli.sjcl_simple.decrypt(password, cipherfile)
+            attachmentname = pbincli.sjcl_simple.decrypt(password, cipherfilename)
 
             attachment = str(attachmentf.split(',', 1)[1:])
             file = b64decode(attachment)
             filename = attachmentname
+
             if args.debug: print("Filename:\t{}\n".format(filename))
 
             check_writable(filename)
@@ -120,9 +140,54 @@ def get(args):
 
         if 'burnafterreading' in result['meta'] and result['meta']['burnafterreading']:
             print("Burn afrer reading flag found. Deleting paste...")
-            result = privatebin().delete(paste[0], 'burnafterreading')
+            result = privatebin().delete(pasteid, 'burnafterreading')
+
             if args.debug: print("Delete response:\t{}\n".format(result.decode("UTF-8")))
 
+            try:
+                result = json.loads(result)
+            except ValueError as e:
+                print("PBinCLI Error: {}".format(e))
+                sys.exit(1)
+
+            if 'status' in result and not result['status']:
+                print("Paste successfully deleted!")
+            elif 'status' in result and result['status']:
+                print("Something went wrong...\nError:\t\t{}".format(result['message']))
+                sys.exit(1)
+            else:
+                print("Something went wrong...\nError: Empty response.")
+                sys.exit(1)
+
+    elif 'status' in result and result['status']:
+        print("Something went wrong...\nError:\t\t{}".format(result['message']))
+        sys.exit(1)
     else:
-        print("Something went wrong...\nError:\t{}".format(result['message']))
+        print("Something went wrong...\nError: Empty response.")
+        sys.exit(1)
+
+
+def delete(args):
+    pasteid = args.paste
+    token = args.token
+
+    if args.debug: print("PasteID:\t{}\nToken:\t\t{}".format(pasteid, token))
+
+    result = privatebin().delete(pasteid, token)
+
+    if args.debug: print("Response:\t{}\n".format(result.decode("UTF-8")))
+
+    try:
+        result = json.loads(result)
+    except ValueError as e:
+        print("PBinCLI Error: {}".format(e))
+        sys.exit(1)
+    
+    if 'status' in result and not result['status']:
+        print("Paste successfully deleted!")
+    elif 'status' in result and result['status']:
+        print("Something went wrong...\nError:\t\t{}".format(result['message']))
+        sys.exit(1)
+    else:
+        print("Something went wrong...\nError: Empty response.")
         sys.exit(1)
