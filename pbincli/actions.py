@@ -15,6 +15,14 @@ def path_leaf(path):
 
 
 def send(args):
+    if args.comment:
+        text = args.comment
+    elif args.file:
+        text = "Sending file to you!"
+    else:
+        print("Nothing to send!")
+        sys.exit(1)
+
     passphrase = b64encode(os.urandom(32))
     if args.debug: print("Passphrase:\t{}".format(b64encode(passphrase)))
     if args.password:
@@ -24,11 +32,6 @@ def send(args):
     else:
         password = passphrase
     if args.debug: print("Password:\t{}".format(password))
-
-    if args.comment:
-        text = args.comment
-    else:
-        text = "Sending file to you!"
 
     if args.file:
         check_readable(args.file)
