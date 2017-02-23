@@ -1,6 +1,8 @@
+# cryptography dependecies
 appdirs
-packaging
 cffi
-cryptography
+packaging
 pycparser
+# required packeges
+cryptography
 requests

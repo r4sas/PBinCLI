@@ -34,7 +34,7 @@ def decrypt(pwd, json):
     return result
 
 
-def encrypt(pwd, plaintext, mode='gcm', algorithm='aes',
+def encrypt(pwd, plaintext, salt_in=None, mode='gcm', algorithm='aes',
             keysize=256, tagsize=128, iters=10000):
     ts = tagsize / 8
 
@@ -42,7 +42,7 @@ def encrypt(pwd, plaintext, mode='gcm', algorithm='aes',
     algo_class = getattr(algorithms, algorithm.upper())
 
     iv = os.urandom(16)
-    kdf, salt = _kdf(keysize, iters)
+    kdf, salt = _kdf(keysize, iters, salt_in)
     key = kdf.derive(pwd)
     cipher = Cipher(algo_class(key),
                     mode_class(iv, min_tag_length=ts),

@@ -16,10 +16,12 @@ def main():
     --comment "My file" --password mypass image.txt"""
     )
     send_parser.add_argument("-B", "--burn", default=False, action="store_true", help="burn sent paste after reading")
-    send_parser.add_argument("-c", "--comment", help="comment in quotes")
     send_parser.add_argument("-D", "--discus", default=False, action="store_true", help="open discussion of sent paste")
-    send_parser.add_argument("-E", "--expire", default="1day", action="store", help="expiration of paste (default: 1day)")
-    send_parser.add_argument("-F", "--format", default="plaintext", action="store", choices=["plaintext", "syntaxhighlighting", "markdown"], help="format of paste (default: plaintext)")
+    send_parser.add_argument("-E", "--expire", default="1day", action="store",
+        choices=["5min", "10min", "1hour", "1day", "1week", "1month", "1year", "never"], help="expiration of paste (default: 1day)")
+    send_parser.add_argument("-F", "--format", default="plaintext", action="store",
+        choices=["plaintext", "syntaxhighlighting", "markdown"], help="format of comment (default: plaintext)")
+    send_parser.add_argument("-c", "--comment", help="comment in quotes")
     send_parser.add_argument("-p", "--password", help="password for encrypting paste")
     send_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
     send_parser.add_argument("-f", "--file", help="example: image.jpg or full path to file")

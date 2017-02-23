@@ -1,5 +1,6 @@
 import requests
 
+
 class privatebin(object):
     def __init__(self):
         self.proxies = {'http': 'http://127.0.0.1:4444'}

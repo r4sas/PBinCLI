@@ -5,7 +5,6 @@ from base64 import b64encode, b64decode
 from mimetypes import guess_type
 from pbincli.transports import privatebin
 from pbincli.utils import PBinCLIException, check_readable, check_writable, json_load_byteified
-from zlib import compress, decompress
 
 
 def path_leaf(path):
@@ -17,13 +16,16 @@ def send(args):
     if args.comment:
         text = args.comment
     elif args.file:
-        text = "Sending file to you!"
+        text = "Sending a file to you!"
     else:
         print("Nothing to send!")
         sys.exit(1)
 
+    salt = os.urandom(8)
     passphrase = b64encode(os.urandom(32))
     if args.debug: print("Passphrase:\t{}".format(passphrase))
+
+    """If we set PASSWORD variable"""
     if args.password:
         digest = hashlib.sha256(args.password.encode("UTF-8")).hexdigest()
         password = passphrase + digest.encode("UTF-8")
@@ -32,6 +34,10 @@ def send(args):
 
     if args.debug: print("Password:\t{}".format(password))
 
+    cipher = pbincli.sjcl_simple.encrypt(password, text, salt)
+    request = {'data':json.dumps(cipher, ensure_ascii=False).replace(' ',''),'expire':args.expire,'formatter':args.format,'burnafterreading':int(args.burn),'opendiscussion':int(args.discus)}
+
+    """If we set FILE variable"""
     if args.file:
         check_readable(args.file)
         with open(args.file, "rb") as f:
@@ -43,13 +49,9 @@ def send(args):
         file = "data:" + mime[0] + ";base64," + b64encode(contents)
         filename = path_leaf(args.file)
 
-        cipherfile = pbincli.sjcl_simple.encrypt(password, file)
-        cipherfilename = pbincli.sjcl_simple.encrypt(password, filename)
+        cipherfile = pbincli.sjcl_simple.encrypt(password, file, salt)
+        cipherfilename = pbincli.sjcl_simple.encrypt(password, filename, salt)
 
-    cipher = pbincli.sjcl_simple.encrypt(password, text)
-    request = {'data':json.dumps(cipher, ensure_ascii=False).replace(' ',''),'expire':args.expire,'formatter':args.format,'burnafterreading':int(args.burn),'opendiscussion':int(args.discus)}
-
-    if cipherfile and cipherfilename:
         request['attachment'] = json.dumps(cipherfile, ensure_ascii=False).replace(' ','')
         request['attachmentname'] = json.dumps(cipherfilename, ensure_ascii=False).replace(' ','')
 
@@ -66,7 +68,7 @@ def send(args):
         sys.exit(1)
 
     if 'status' in result and not result['status']:
-        print("Paste uploaded!\nPasteID:\t{}\nPassword:\t{}\nDelete token:\t{}\n\nLink:\t{}?{}#{}".format(result['id'], passphrase, result['deletetoken'], server, result['id'], passphrase))
+        print("Paste uploaded!\nPasteID:\t{}\nPassword:\t{}\nDelete token:\t{}\n\nLink:\t\t{}?{}#{}".format(result['id'], passphrase, result['deletetoken'], server, result['id'], passphrase))
     elif 'status' in result and result['status']:
         print("Something went wrong...\nError:\t\t{}".format(result['message']))
         sys.exit(1)
@@ -106,10 +108,10 @@ def get(args):
         print("Paste received! Text inside:")
         data = pbincli.utils.json_loads_byteified(result['data'])
 
-        if args.debug: print("Text:\t{}".format(data))
+        if args.debug: print("Text:\t{}\n".format(data))
 
         text = pbincli.sjcl_simple.decrypt(password, data)
-        print(text)
+        print("{}\n".format(text))
 
         check_writable("paste.txt")
         with open("paste.txt", "wb") as f:
