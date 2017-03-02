@@ -1,13 +1,15 @@
 import json, hashlib, ntpath, os, sys
-import pbincli.actions, pbincli.sjcl_simple
-import pbincli.settings
+import pbincli.actions, pbincli.sjcl_simple, pbincli.settings
 
 from base64 import b64encode, b64decode
 from mimetypes import guess_type
 from pbincli.transports import privatebin
 from pbincli.utils import PBinCLIException, check_readable, check_writable, json_load_byteified
 
+
+""" Initialise settings """
 pbincli.settings.init()
+
 
 def path_leaf(path):
     head, tail = ntpath.split(path)

@@ -1,10 +1,12 @@
 def init():
     global server, proxies, useproxy
 
-    """Edit that variables"""
-    server = "https://privatebin.net/"
+    """ Edit that variables """
+    server = "http://paste.r4sas.i2p/"
     proxies = {'http': 'http://127.0.0.1:4444'}
-    useproxy = False
+
+    """ True/False """
+    useproxy = True
 
     """ There is nothing more to do :D """
 

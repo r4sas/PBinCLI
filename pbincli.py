@@ -1,8 +1,5 @@
 #! /usr/bin/env python
-import os
-import sys
-import argparse
-
+import os, sys, argparse
 import pbincli.actions
 from pbincli.utils import PBinCLIException
 

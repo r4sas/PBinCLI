@@ -34,3 +34,8 @@ It must be formated like `pasteID#passphrase`. Example:
 More info you can find by typing
 
 	$ python pbincli.py {send,get} -h
+
+License
+-------
+This project is licensed under the DWTFYWWI license, which can be found in the file
+LICENSE in the root of the project source code.
