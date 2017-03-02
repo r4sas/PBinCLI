@@ -142,7 +142,7 @@ def get(args):
             file = b64decode(attachment)
             filename = attachmentname
 
-            if args.debug: print("Filename:\t{}\n".format(filename))
+            print("Filename:\t{}\n".format(filename))
 
             check_writable(filename)
             with open(filename, "wb") as f:
