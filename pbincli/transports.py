@@ -1,25 +1,25 @@
 import requests
-
+import pbincli.settings
 
 class privatebin(object):
     def __init__(self):
-        self.proxies = {'http': 'http://127.0.0.1:4444'}
-        self.server = 'http://paste.r4sas.i2p/'
+        self.server = pbincli.settings.server
+        self.proxies = pbincli.settings.proxies
         self.headers = {'X-Requested-With': 'JSONHttpRequest'}
 
 
     def post(self, request):
-        r = requests.post(url=self.server, headers=self.headers, proxies=self.proxies, data=request)
-        return r.text, self.server
+        r = requests.post(url = self.server, headers = self.headers, proxies = self.proxies, data = request)
+        return r.text
 
 
     def get(self, request):
         url = self.server + "?" + request
-        r = requests.get(url=url, headers=self.headers, proxies=self.proxies)
+        r = requests.get(url = url, headers = self.headers, proxies = self.proxies)
         return r.text
 
 
     def delete(self, pasteid, token):
         request = {'pasteid':pasteid,'deletetoken':token}
-        r = requests.post(url=self.server, headers=self.headers, proxies=self.proxies, data=request)
+        r = requests.post(url = self.server, headers = self.headers, proxies = self.proxies, data = request)
         return r.text

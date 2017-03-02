@@ -6,6 +6,7 @@ import argparse
 import pbincli.actions
 from pbincli.utils import PBinCLIException
 
+
 def main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(title="actions", help="List of commands")
@@ -53,6 +54,7 @@ def main():
             sys.exit(1)
     else:
         parser.print_help()
+
 
 if __name__ == "__main__":
     main()

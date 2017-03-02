@@ -1,11 +1,13 @@
 import json, hashlib, ntpath, os, sys
 import pbincli.actions, pbincli.sjcl_simple
+import pbincli.settings
 
 from base64 import b64encode, b64decode
 from mimetypes import guess_type
 from pbincli.transports import privatebin
 from pbincli.utils import PBinCLIException, check_readable, check_writable, json_load_byteified
 
+pbincli.settings.init()
 
 def path_leaf(path):
     head, tail = ntpath.split(path)
@@ -21,6 +23,9 @@ def send(args):
         print("Nothing to send!")
         sys.exit(1)
 
+    """Formatting request"""
+    request = {'expire':args.expire,'formatter':args.format,'burnafterreading':int(args.burn),'opendiscussion':int(args.discus)}
+
     salt = os.urandom(8)
     passphrase = b64encode(os.urandom(32))
     if args.debug: print("Passphrase:\t{}".format(passphrase))
@@ -34,8 +39,9 @@ def send(args):
 
     if args.debug: print("Password:\t{}".format(password))
 
+    """Encrypting text (comment)"""
     cipher = pbincli.sjcl_simple.encrypt(password, text, salt)
-    request = {'data':json.dumps(cipher, ensure_ascii=False).replace(' ',''),'expire':args.expire,'formatter':args.format,'burnafterreading':int(args.burn),'opendiscussion':int(args.discus)}
+    request['data'] = json.dumps(cipher, ensure_ascii=False).replace(' ','')
 
     """If we set FILE variable"""
     if args.file:
@@ -57,7 +63,8 @@ def send(args):
 
     if args.debug: print("Request:\t{}".format(request))
 
-    result, server = privatebin().post(request)
+    server = pbincli.settings.server
+    result = privatebin().post(request)
 
     if args.debug: print("Response:\t{}\n".format(result.decode("UTF-8")))
 

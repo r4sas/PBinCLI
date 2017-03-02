@@ -13,7 +13,7 @@ $ pip install -r requirements.txt
 
 Usage
 -----
-Edit `self.server = 'http://paste.r4sas.i2p/'` in `pbincli/transports.py` to your server.
+Edit variables `server`, `proxies` and `useproxy` in `pbincli/settings.py` to your values.
 
 Run inside `venv` command:
 
