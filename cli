@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python2.7
 import os, sys, argparse
 import pbincli.actions
 from pbincli.utils import PBinCLIException
@@ -22,6 +22,7 @@ def main():
     send_parser.add_argument("-c", "--comment", help="comment in quotes")
     send_parser.add_argument("-p", "--password", help="password for encrypting paste")
     send_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
+    send_parser.add_argument("--dry", default=False, action="store_true", help="invoke dry run")
     send_parser.add_argument("-f", "--file", help="example: image.jpg or full path to file")
     send_parser.set_defaults(func=pbincli.actions.send)
 

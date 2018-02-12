@@ -7,7 +7,7 @@ from pbincli.transports import privatebin
 from pbincli.utils import PBinCLIException, check_readable, check_writable, json_load_byteified
 
 
-""" Initialise settings """
+# Initialise settings
 pbincli.settings.init()
 
 
@@ -25,14 +25,14 @@ def send(args):
         print("Nothing to send!")
         sys.exit(1)
 
-    """Formatting request"""
+    # Formatting request
     request = {'expire':args.expire,'formatter':args.format,'burnafterreading':int(args.burn),'opendiscussion':int(args.discus)}
 
     salt = os.urandom(8)
     passphrase = b64encode(os.urandom(32))
     if args.debug: print("Passphrase:\t{}".format(passphrase))
 
-    """If we set PASSWORD variable"""
+    # If we set PASSWORD variable
     if args.password:
         digest = hashlib.sha256(args.password.encode("UTF-8")).hexdigest()
         password = passphrase + digest.encode("UTF-8")
@@ -41,11 +41,11 @@ def send(args):
 
     if args.debug: print("Password:\t{}".format(password))
 
-    """Encrypting text (comment)"""
+    # Encrypting text (comment)
     cipher = pbincli.sjcl_simple.encrypt(password, text, salt)
     request['data'] = json.dumps(cipher, ensure_ascii=False).replace(' ','')
 
-    """If we set FILE variable"""
+    # If we set FILE variable
     if args.file:
         check_readable(args.file)
         with open(args.file, "rb") as f:
@@ -64,6 +64,9 @@ def send(args):
         request['attachmentname'] = json.dumps(cipherfilename, ensure_ascii=False).replace(' ','')
 
     if args.debug: print("Request:\t{}".format(request))
+
+    # If we use dry option, exit now
+    if args.dry: sys.exit(0)
 
     server = pbincli.settings.server
     result = privatebin().post(request)
