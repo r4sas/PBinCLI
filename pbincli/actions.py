@@ -1,5 +1,6 @@
 import json, hashlib, ntpath, os, sys
-import pbincli.actions, pbincli.sjcl_simple, pbincli.settings
+import pbincli.actions, pbincli.settings
+from sjcl import SJCL
 
 from base64 import b64encode, b64decode
 from mimetypes import guess_type
@@ -28,7 +29,6 @@ def send(args):
     # Formatting request
     request = {'expire':args.expire,'formatter':args.format,'burnafterreading':int(args.burn),'opendiscussion':int(args.discus)}
 
-    salt = os.urandom(8)
     passphrase = b64encode(os.urandom(32))
     if args.debug: print("Passphrase:\t{}".format(passphrase))
 
@@ -42,7 +42,11 @@ def send(args):
     if args.debug: print("Password:\t{}".format(password))
 
     # Encrypting text (comment)
-    cipher = pbincli.sjcl_simple.encrypt(password, text, salt)
+    cipher = SJCL().encrypt(text.encode("utf-8"), password, mode='gcm')
+
+    # TODO: should be implemented in upstream
+    for k in ['salt', 'iv', 'ct']: cipher[k] = cipher[k].decode()
+
     request['data'] = json.dumps(cipher, ensure_ascii=False).replace(' ','')
 
     # If we set FILE variable
@@ -54,11 +58,14 @@ def send(args):
         mime = guess_type(args.file)
         if args.debug: print("Filename:\t{}\nMIME-type:\t{}".format(path_leaf(args.file), mime[0]))
 
-        file = "data:" + mime[0] + ";base64," + b64encode(contents)
+        file = "data:" + mime[0] + ";base64," + b64encode(contents).decode()
         filename = path_leaf(args.file)
 
-        cipherfile = pbincli.sjcl_simple.encrypt(password, file, salt)
-        cipherfilename = pbincli.sjcl_simple.encrypt(password, filename, salt)
+        cipherfile = SJCL().encrypt(file.encode("utf-8"), password, mode='gcm')
+        # TODO: should be implemented in upstream
+        for k in ['salt', 'iv', 'ct']: cipherfile[k] = cipherfile[k].decode()
+        cipherfilename = SJCL().encrypt(filename.encode("utf-8"), password, mode='gcm')
+        for k in ['salt', 'iv', 'ct']: cipherfilename[k] = cipherfilename[k].decode()
 
         request['attachment'] = json.dumps(cipherfile, ensure_ascii=False).replace(' ','')
         request['attachmentname'] = json.dumps(cipherfilename, ensure_ascii=False).replace(' ','')
@@ -80,7 +87,7 @@ def send(args):
         sys.exit(1)
 
     if 'status' in result and not result['status']:
-        print("Paste uploaded!\nPasteID:\t{}\nPassword:\t{}\nDelete token:\t{}\n\nLink:\t\t{}?{}#{}".format(result['id'], passphrase, result['deletetoken'], server, result['id'], passphrase))
+        print("Paste uploaded!\nPasteID:\t{}\nPassword:\t{}\nDelete token:\t{}\n\nLink:\t\t{}?{}#{}".format(result['id'], passphrase.decode(), result['deletetoken'], server, result['id'], passphrase.decode()))
     elif 'status' in result and result['status']:
         print("Something went wrong...\nError:\t\t{}".format(result['message']))
         sys.exit(1)
@@ -118,12 +125,12 @@ def get(args):
 
     if 'status' in result and not result['status']:
         print("Paste received! Text inside:")
-        data = pbincli.utils.json_loads_byteified(result['data'])
+        data = json.loads(result['data'])
 
         if args.debug: print("Text:\t{}\n".format(data))
 
-        text = pbincli.sjcl_simple.decrypt(password, data)
-        print("{}\n".format(text))
+        text = SJCL().decrypt(data, password)
+        print("{}\n".format(text.decode()))
 
         check_writable("paste.txt")
         with open("paste.txt", "wb") as f:
@@ -133,13 +140,13 @@ def get(args):
         if 'attachment' in result and 'attachmentname' in result:
             print("Found file, attached to paste. Decoding it and saving")
 
-            cipherfile = pbincli.utils.json_loads_byteified(result['attachment']) 
-            cipherfilename = pbincli.utils.json_loads_byteified(result['attachmentname'])
+            cipherfile = json.loads(result['attachment']) 
+            cipherfilename = json.loads(result['attachmentname'])
 
             if args.debug: print("Name:\t{}\nData:\t{}".format(cipherfilename, cipherfile))
 
-            attachmentf = pbincli.sjcl_simple.decrypt(password, cipherfile)
-            attachmentname = pbincli.sjcl_simple.decrypt(password, cipherfilename)
+            attachmentf = SJCL().decrypt(cipherfile, password)
+            attachmentname = SJCL().decrypt(cipherfilename, password)
 
             attachment = str(attachmentf.split(',', 1)[1:])
             file = b64decode(attachment)
