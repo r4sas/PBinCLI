@@ -19,11 +19,12 @@ def main():
         choices=["5min", "10min", "1hour", "1day", "1week", "1month", "1year", "never"], help="expiration of paste (default: 1day)")
     send_parser.add_argument("-F", "--format", default="plaintext", action="store",
         choices=["plaintext", "syntaxhighlighting", "markdown"], help="format of comment (default: plaintext)")
-    send_parser.add_argument("-c", "--comment", help="comment in quotes")
+    send_parser.add_argument("-c", "--comment", help="comment in quotes. Ignored if used stdin")
     send_parser.add_argument("-p", "--password", help="password for encrypting paste")
     send_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
     send_parser.add_argument("--dry", default=False, action="store_true", help="invoke dry run")
     send_parser.add_argument("-f", "--file", help="example: image.jpg or full path to file")
+    send_parser.add_argument("stdin", help="input paste text from stdin", nargs="?", type=argparse.FileType("r"), default=sys.stdin)
     send_parser.set_defaults(func=pbincli.actions.send)
 
     get_parser = subparsers.add_parser("get", description="Get data from PrivateBin instance", usage="""

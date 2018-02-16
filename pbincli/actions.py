@@ -18,7 +18,9 @@ def path_leaf(path):
 
 
 def send(args):
-    if args.comment:
+    if args.stdin:
+        text = args.stdin.read()
+    elif args.comment:
         text = args.comment
     elif args.file:
         text = "Sending a file to you!"
@@ -42,7 +44,7 @@ def send(args):
     if args.debug: print("Password:\t{}".format(password))
 
     # Encrypting text (comment)
-    cipher = SJCL().encrypt(text.encode("utf-8"), password, mode='gcm')
+    cipher = SJCL().encrypt(text.encode("UTF-8"), password, mode='gcm')
 
     # TODO: should be implemented in upstream
     for k in ['salt', 'iv', 'ct']: cipher[k] = cipher[k].decode()
@@ -78,7 +80,7 @@ def send(args):
     server = pbincli.settings.server
     result = privatebin().post(request)
 
-    if args.debug: print("Response:\t{}\n".format(result.decode("UTF-8")))
+    if args.debug: print("Response:\t{}\n".format(result))
 
     try:
         result = json.loads(result)
@@ -115,7 +117,7 @@ def get(args):
         print("PBinCLI error: Incorrect request")
         sys.exit(1)
 
-    if args.debug: print("Response:\t{}\n".format(result.decode("UTF-8")))
+    if args.debug: print("Response:\t{}\n".format(result))
 
     try:
         result = json.loads(result)
@@ -163,7 +165,7 @@ def get(args):
             print("Burn afrer reading flag found. Deleting paste...")
             result = privatebin().delete(pasteid, 'burnafterreading')
 
-            if args.debug: print("Delete response:\t{}\n".format(result.decode("UTF-8")))
+            if args.debug: print("Delete response:\t{}\n".format(result))
 
             try:
                 result = json.loads(result)
@@ -196,7 +198,7 @@ def delete(args):
 
     result = privatebin().delete(pasteid, token)
 
-    if args.debug: print("Response:\t{}\n".format(result.decode("UTF-8")))
+    if args.debug: print("Response:\t{}\n".format(result))
 
     try:
         result = json.loads(result)
