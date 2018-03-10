@@ -1,3 +1,3 @@
 pycryptodome
-git+https://github.com/l-n-s/sjcl@add_gcm_mode
+sjcl
 requests

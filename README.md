@@ -1,7 +1,45 @@
 PBinCLI
 =====
 
-[PrivateBin](https://github.com/PrivateBin/PrivateBin/) CLI (in development)
+#### [PrivateBin](https://github.com/PrivateBin/PrivateBin/) CLI (in development)
+
+This CLI tool currently working only with compression-disabled services (see [that](https://github.com/PrivateBin/PrivateBin/issues/188#issuecomment-281284360) issue).
+
+```patch
+--- a/js/privatebin.js
++++ b/js/privatebin.js
+@@ -545,9 +545,9 @@ jQuery.PrivateBin = (function($, sjcl, Base64, RawDeflate) {
+             };
+
+             if ((password || '').trim().length === 0) {
+-                return sjcl.encrypt(key, compress(message), options);
++                return sjcl.encrypt(key, message, options);
+             }
+-            return sjcl.encrypt(key + sjcl.codec.hex.fromBits(sjcl.hash.sha256.hash(password)), compress(message), options);
++            return sjcl.encrypt(key + sjcl.codec.hex.fromBits(sjcl.hash.sha256.hash(password)), message, options);
+         };
+
+         /**
+@@ -564,10 +564,10 @@ jQuery.PrivateBin = (function($, sjcl, Base64, RawDeflate) {
+         {
+             if (data !== undefined) {
+                 try {
+-                    return decompress(sjcl.decrypt(key, data));
++                    return sjcl.decrypt(key, data);
+                 } catch(err) {
+                     try {
+-                        return decompress(sjcl.decrypt(key + sjcl.codec.hex.fromBits(sjcl.hash.sha256.hash(password)), data));
++                        return sjcl.decrypt(key + sjcl.codec.hex.fromBits(sjcl.hash.sha256.hash(password)), data);
+                     } catch(e) {
+                         return '';
+                     }
+```
+
+Currenty compression disabled on next services:
+
+* https://paste.i2pd.xyz/
+* https://paste.r4sas.i2p/
+* *here can be your service*
 
 Installing
 -----
