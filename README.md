@@ -38,7 +38,7 @@ This CLI tool currently working only with compression-disabled services (see [th
 Currenty compression disabled on next services:
 
 * https://paste.i2pd.xyz/
-* https://paste.r4sas.i2p/
+* http://paste.r4sas.i2p/
 * *here can be your service*
 
 Installing
