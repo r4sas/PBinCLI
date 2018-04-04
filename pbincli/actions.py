@@ -1,4 +1,4 @@
-import json, hashlib, ntpath, os, sys
+import json, hashlib, ntpath, os, sys, zlib
 import pbincli.actions, pbincli.settings
 from sjcl import SJCL
 
@@ -16,6 +16,15 @@ def path_leaf(path):
     head, tail = ntpath.split(path)
     return tail or ntpath.basename(head)
 
+
+def decompress(s):
+    return zlib.decompress(bytearray(map(ord, b64decode(s.encode('utf-8')).decode('utf-8'))), -zlib.MAX_WBITS)
+
+def compress(s):
+    co = zlib.compressobj(wbits=-zlib.MAX_WBITS)
+    b = co.compress(s) + co.flush()
+
+    return b64encode(''.join(map(chr, b)).encode('utf-8'))
 
 def send(args):
     if args.stdin:
@@ -44,7 +53,7 @@ def send(args):
     if args.debug: print("Password:\t{}".format(password))
 
     # Encrypting text (comment)
-    cipher = SJCL().encrypt(text.encode("UTF-8"), password, mode='gcm')
+    cipher = SJCL().encrypt(compress(text.encode('utf-8')), password, mode='gcm')
 
     # TODO: should be implemented in upstream
     for k in ['salt', 'iv', 'ct']: cipher[k] = cipher[k].decode()
@@ -63,10 +72,10 @@ def send(args):
         file = "data:" + mime[0] + ";base64," + b64encode(contents).decode()
         filename = path_leaf(args.file)
 
-        cipherfile = SJCL().encrypt(file.encode("utf-8"), password, mode='gcm')
+        cipherfile = SJCL().encrypt(compress(file.encode('utf-8')), password, mode='gcm')
         # TODO: should be implemented in upstream
         for k in ['salt', 'iv', 'ct']: cipherfile[k] = cipherfile[k].decode()
-        cipherfilename = SJCL().encrypt(filename.encode("utf-8"), password, mode='gcm')
+        cipherfilename = SJCL().encrypt(compress(filename.encode('utf-8')), password, mode='gcm')
         for k in ['salt', 'iv', 'ct']: cipherfilename[k] = cipherfilename[k].decode()
 
         request['attachment'] = json.dumps(cipherfile, ensure_ascii=False).replace(' ','')
@@ -132,11 +141,11 @@ def get(args):
         if args.debug: print("Text:\t{}\n".format(data))
 
         text = SJCL().decrypt(data, password)
-        print("{}\n".format(text.decode()))
+        print("{}\n".format(decompress(text.decode())))
 
         check_writable("paste.txt")
         with open("paste.txt", "wb") as f:
-            f.write(text)
+            f.write(decompress(text.decode()))
             f.close
 
         if 'attachment' in result and 'attachmentname' in result:
@@ -150,9 +159,9 @@ def get(args):
             attachmentf = SJCL().decrypt(cipherfile, password)
             attachmentname = SJCL().decrypt(cipherfilename, password)
 
-            attachment = str(attachmentf.split(',', 1)[1:])
+            attachment = decompress(attachmentf.decode('utf-8')).decode('utf-8').split(',', 1)[1]
             file = b64decode(attachment)
-            filename = attachmentname
+            filename = decompress(attachmentname.decode('utf-8')).decode('utf-8')
 
             print("Filename:\t{}\n".format(filename))
 
