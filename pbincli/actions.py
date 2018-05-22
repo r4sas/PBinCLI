@@ -4,13 +4,12 @@ from sjcl import SJCL
 
 from base64 import b64encode, b64decode
 from mimetypes import guess_type
-from pbincli.transports import privatebin
+from pbincli.transports import PrivateBin
 from pbincli.utils import PBinCLIException, check_readable, check_writable, json_load_byteified
 
 
 # Initialise settings
 pbincli.settings.init()
-
 
 def path_leaf(path):
     head, tail = ntpath.split(path)
@@ -27,6 +26,8 @@ def compress(s):
     return b64encode(''.join(map(chr, b)).encode('utf-8'))
 
 def send(args):
+    api = PrivateBin(args.server, args.proxy, args.use-proxy)
+
     if args.stdin:
         text = args.stdin.read()
     elif args.text:
@@ -87,7 +88,7 @@ def send(args):
     if args.dry: sys.exit(0)
 
     server = pbincli.settings.server
-    result = privatebin().post(request)
+    result = api.post(request)
 
     if args.debug: print("Response:\t{}\n".format(result))
 
@@ -108,6 +109,8 @@ def send(args):
 
 
 def get(args):
+    api = PrivateBin(args.server, args.proxy, args.use-proxy)
+
     pasteid, passphrase = args.pasteinfo.split("#")
 
     if pasteid and passphrase:
@@ -121,7 +124,7 @@ def get(args):
 
         if args.debug: print("Password:\t{}".format(password))
 
-        result = privatebin().get(pasteid)
+        result = api.get(pasteid)
     else:
         print("PBinCLI error: Incorrect request")
         sys.exit(1)
@@ -172,7 +175,7 @@ def get(args):
 
         if 'burnafterreading' in result['meta'] and result['meta']['burnafterreading']:
             print("Burn afrer reading flag found. Deleting paste...")
-            result = privatebin().delete(pasteid, 'burnafterreading')
+            result = api.delete(pasteid, 'burnafterreading')
 
             if args.debug: print("Delete response:\t{}\n".format(result))
 
@@ -200,12 +203,14 @@ def get(args):
 
 
 def delete(args):
+    api = PrivateBin(args.server, args.proxy, args.use-proxy)
+
     pasteid = args.paste
     token = args.token
 
     if args.debug: print("PasteID:\t{}\nToken:\t\t{}".format(pasteid, token))
 
-    result = privatebin().delete(pasteid, token)
+    result = api.delete(pasteid, token)
 
     if args.debug: print("Response:\t{}\n".format(result))
 

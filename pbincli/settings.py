@@ -3,7 +3,7 @@ def init():
 
     # Edit that variables
     server = "https://paste.i2pd.xyz/"
-    proxies = {'socks5': 'socks5://127.0.0.1:9050'}
+    proxy = "socks5://127.0.0.1:9050"
 
     # True/False
     useproxy = False

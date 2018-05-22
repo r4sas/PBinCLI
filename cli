@@ -19,8 +19,9 @@ def main():
         choices=["5min", "10min", "1hour", "1day", "1week", "1month", "1year", "never"], help="expiration of paste (default: 1day)")
     send_parser.add_argument("-F", "--format", default="plaintext", action="store",
         choices=["plaintext", "syntaxhighlighting", "markdown"], help="format of text (default: plaintext)")
-    send_parser.add_argument("-S", "--server", help="Set server to work with")
-    send_parser.add_argument("-P", "--proxy", help="Proxy address (example: socks5://127.0.0.1:9050)")
+    send_parser.add_argument("--server", help="Set server to work with")
+    send_parser.add_argument("--use-proxy", default=False, action="store_true", help="Enable using of proxy")
+    send_parser.add_argument("--proxy", help="Proxy address (example: socks5://127.0.0.1:9050)")
     send_parser.add_argument("-t", "--text", help="comment in quotes. Ignored if used stdin")
     send_parser.add_argument("-p", "--password", help="password for encrypting paste")
     send_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
