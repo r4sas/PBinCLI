@@ -29,8 +29,8 @@ def compress(s):
 def send(args):
     if args.stdin:
         text = args.stdin.read()
-    elif args.comment:
-        text = args.comment
+    elif args.text:
+        text = args.text
     elif args.file:
         text = "Sending a file to you!"
     else:
@@ -52,7 +52,7 @@ def send(args):
 
     if args.debug: print("Password:\t{}".format(password))
 
-    # Encrypting text (comment)
+    # Encrypting text
     cipher = SJCL().encrypt(compress(text.encode('utf-8')), password, mode='gcm')
 
     # TODO: should be implemented in upstream
