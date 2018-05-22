@@ -3,13 +3,20 @@ import pbincli.settings
 
 class privatebin(object):
     def __init__(self):
-        self.server = pbincli.settings.server
+        if args.server:
+            self.server = args.server
+        else:
+            self.server = pbincli.settings.server
+
         self.headers = {'X-Requested-With': 'JSONHttpRequest'}
 
-        if pbincli.settings.useproxy:
+        if args.proxy:
+            self.proxies = {args.proxy.split('://')[0]: args.proxy}
+        elif pbincli.settings.useproxy:
             self.proxies = pbincli.settings.proxies
         else:
             self.proxies = {}
+
 
     def post(self, request):
         r = requests.post(url = self.server, headers = self.headers, proxies = self.proxies, data = request)
