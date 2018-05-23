@@ -4,7 +4,7 @@ from sjcl import SJCL
 
 from base64 import b64encode, b64decode
 from mimetypes import guess_type
-from pbincli.transports import PrivateBin
+from pbincli.api import PrivateBin
 from pbincli.utils import PBinCLIException, check_readable, check_writable, json_load_byteified
 
 
