@@ -5,6 +5,18 @@ import pbincli.actions
 from pbincli.api import PrivateBin
 from pbincli.utils import PBinCLIException
 
+CONFIG_PATHS = [os.path.join(".", "pbincli.conf", ),
+       os.path.join(os.getenv("HOME") or "~", ".config", "pbincli", "pbincli.conf") ]
+
+def read_config(filename):
+    """Read config variables from a file"""
+    settings = {}
+    with open(filename) as f:
+        for l in f.readlines():
+            key, value = l.strip().split("=")
+            settings[key.strip()] = value.strip()
+
+    return settings
 
 def main():
     parser = argparse.ArgumentParser()
@@ -49,10 +61,19 @@ def main():
     # parse arguments
     args = parser.parse_args()
 
-    server = os.getenv("PRIVATEBIN_SERVER", "https://paste.i2pd.xyz/")
-    proxy = os.getenv("PRIVATEBIN_PROXY")
+    CONFIG = {"server": "https://paste.i2pd.xyz/",
+              "proxy": None}
 
-    api_client = PrivateBin(server, proxy=proxy)
+    for p in CONFIG_PATHS:
+        is os.path.exists(p):
+            CONFIG.update(read_config(p))
+            break
+
+    for key in CONFIG.keys():
+        var = "PRIVATEBIN_{}".format(key.upper())
+        if var in os.environ: CONFIG[key] = os.getenv(var)
+
+    api_client = PrivateBin(CONFIG["server"], proxy=CONFIG["proxy"])
 
     if hasattr(args, "func"):
         try:
