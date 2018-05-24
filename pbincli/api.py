@@ -1,11 +1,10 @@
 import requests
-import pbincli.settings
 
 class PrivateBin:
-    def __init__(self, server = pbincli.settings.server, proxy = pbincli.settings.proxy, useproxy = pbincli.settings.useproxy):
+    def __init__(self, server, proxy=None):
         self.server = server
         self.headers = {'X-Requested-With': 'JSONHttpRequest'}
-        if useproxy:
+        if proxy:
             self.proxy = {proxy.split('://')[0]: proxy}
         else:
             self.proxy = {}

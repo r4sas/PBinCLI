@@ -1,15 +1,11 @@
 import json, hashlib, ntpath, os, sys, zlib
-import pbincli.actions, pbincli.settings
+import pbincli.actions
 from sjcl import SJCL
 
 from base64 import b64encode, b64decode
 from mimetypes import guess_type
-from pbincli.transports import PrivateBin
 from pbincli.utils import PBinCLIException, check_readable, check_writable, json_load_byteified
 
-
-# Initialise settings
-pbincli.settings.init()
 
 def path_leaf(path):
     head, tail = ntpath.split(path)
@@ -25,9 +21,7 @@ def compress(s):
 
     return b64encode(''.join(map(chr, b)).encode('utf-8'))
 
-def send(args):
-    api = PrivateBin(args.server, args.proxy, args.use-proxy)
-
+def send(args, api_client):
     if args.stdin:
         text = args.stdin.read()
     elif args.text:
@@ -87,8 +81,7 @@ def send(args):
     # If we use dry option, exit now
     if args.dry: sys.exit(0)
 
-    server = pbincli.settings.server
-    result = api.post(request)
+    result = api_client.post(request)
 
     if args.debug: print("Response:\t{}\n".format(result))
 
@@ -99,7 +92,7 @@ def send(args):
         sys.exit(1)
 
     if 'status' in result and not result['status']:
-        print("Paste uploaded!\nPasteID:\t{}\nPassword:\t{}\nDelete token:\t{}\n\nLink:\t\t{}?{}#{}".format(result['id'], passphrase.decode(), result['deletetoken'], server, result['id'], passphrase.decode()))
+        print("Paste uploaded!\nPasteID:\t{}\nPassword:\t{}\nDelete token:\t{}\n\nLink:\t\t{}?{}#{}".format(result['id'], passphrase.decode(), result['deletetoken'], api_client.server, result['id'], passphrase.decode()))
     elif 'status' in result and result['status']:
         print("Something went wrong...\nError:\t\t{}".format(result['message']))
         sys.exit(1)
@@ -108,9 +101,7 @@ def send(args):
         sys.exit(1)
 
 
-def get(args):
-    api = PrivateBin(args.server, args.proxy, args.use-proxy)
-
+def get(args, api_client):
     pasteid, passphrase = args.pasteinfo.split("#")
 
     if pasteid and passphrase:
@@ -124,7 +115,7 @@ def get(args):
 
         if args.debug: print("Password:\t{}".format(password))
 
-        result = api.get(pasteid)
+        result = api_client.get(pasteid)
     else:
         print("PBinCLI error: Incorrect request")
         sys.exit(1)
@@ -175,7 +166,7 @@ def get(args):
 
         if 'burnafterreading' in result['meta'] and result['meta']['burnafterreading']:
             print("Burn afrer reading flag found. Deleting paste...")
-            result = api.delete(pasteid, 'burnafterreading')
+            result = api_client.delete(pasteid, 'burnafterreading')
 
             if args.debug: print("Delete response:\t{}\n".format(result))
 
@@ -202,15 +193,13 @@ def get(args):
         sys.exit(1)
 
 
-def delete(args):
-    api = PrivateBin(args.server, args.proxy, args.use-proxy)
-
+def delete(args, api_client):
     pasteid = args.paste
     token = args.token
 
     if args.debug: print("PasteID:\t{}\nToken:\t\t{}".format(pasteid, token))
 
-    result = api.delete(pasteid, token)
+    result = api_client.delete(pasteid, token)
 
     if args.debug: print("Response:\t{}\n".format(result))
 
