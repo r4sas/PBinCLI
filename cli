@@ -65,7 +65,7 @@ def main():
               "proxy": None}
 
     for p in CONFIG_PATHS:
-        is os.path.exists(p):
+        if os.path.exists(p):
             CONFIG.update(read_config(p))
             break
 
