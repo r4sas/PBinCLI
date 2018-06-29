@@ -6,4 +6,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-ENTRYPOINT [ "./cli" ]
+RUN python setup.py install
+
+ENTRYPOINT [ "/usr/local/bin/pbincli" ]
