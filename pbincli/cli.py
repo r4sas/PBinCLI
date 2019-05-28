@@ -73,6 +73,7 @@ def main():
         var = "PRIVATEBIN_{}".format(key.upper())
         if var in os.environ: CONFIG[key] = os.getenv(var)
 
+    if args.debug: print("Server:\t{}".format(CONFIG["server"]))
     api_client = PrivateBin(CONFIG["server"], proxy=CONFIG["proxy"])
 
     if hasattr(args, "func"):

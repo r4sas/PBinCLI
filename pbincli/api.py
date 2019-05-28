@@ -1,4 +1,5 @@
 import requests
+from pbincli.utils import json_encode
 
 class PrivateBin:
     def __init__(self, server, proxy=None):
@@ -22,6 +23,6 @@ class PrivateBin:
 
 
     def delete(self, pasteid, token):
-        request = {'pasteid':pasteid,'deletetoken':token}
+        request = json_encode({'pasteid':pasteid,'deletetoken':token})
         r = requests.post(url = self.server, headers = self.headers, proxies = self.proxy, data = request)
         return r.text

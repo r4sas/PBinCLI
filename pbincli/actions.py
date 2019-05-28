@@ -1,10 +1,21 @@
-import json, hashlib, ntpath, os, sys, zlib
+import json, hashlib, ntpath, sys, zlib
 import pbincli.actions
-from sjcl import SJCL
+from Crypto.Random import get_random_bytes
+from Crypto.Protocol.KDF import PBKDF2
+from Crypto.Hash import HMAC, SHA256
+from Crypto.Cipher import AES
 
 from base64 import b64encode, b64decode
 from mimetypes import guess_type
-from pbincli.utils import PBinCLIException, check_readable, check_writable, json_load_byteified
+from pbincli.utils import PBinCLIException, check_readable, check_writable, json_encode
+
+# Cipher settings
+CIPHER_ITERATION_COUNT = 100000
+CIPHER_SALT_BYTES = 8
+CIPHER_BLOCK_BITS = 256
+CIPHER_BLOCK_BYTES = int(CIPHER_BLOCK_BITS/8)
+CIPHER_TAG_BITS = int(CIPHER_BLOCK_BITS/2)
+CIPHER_TAG_BYTES = int(CIPHER_TAG_BITS/8)
 
 
 def path_leaf(path):
@@ -32,28 +43,40 @@ def send(args, api_client):
         print("Nothing to send!")
         sys.exit(1)
 
-    # Formatting request
-    request = {'expire':args.expire,'formatter':args.format,'burnafterreading':int(args.burn),'opendiscussion':int(args.discus)}
-
-    passphrase = b64encode(os.urandom(32))
+    # Decryption key consists of some random bytes (base64 or base58 encoded in URL hash) and an optional user defined password
+    password = get_random_bytes(CIPHER_BLOCK_BYTES)
+    passphrase = b64encode(password)
     if args.debug: print("Passphrase:\t{}".format(passphrase))
 
     # If we set PASSWORD variable
     if args.password:
-        digest = hashlib.sha256(args.password.encode("UTF-8")).hexdigest()
-        password = passphrase + digest.encode("UTF-8")
-    else:
-        password = passphrase
+        password += args.password.encode('utf-8')
 
     if args.debug: print("Password:\t{}".format(password))
 
-    # Encrypting text
-    cipher = SJCL().encrypt(compress(text.encode('utf-8')), password, mode='gcm')
+    # Key derivation, using PBKDF2 and SHA256 HMAC
+    salt = get_random_bytes(CIPHER_SALT_BYTES)
+    key = PBKDF2(password, salt, dkLen=CIPHER_BLOCK_BYTES, count=CIPHER_ITERATION_COUNT, prf=lambda password, salt: HMAC.new(password, salt, SHA256).digest())
 
-    # TODO: should be implemented in upstream
-    for k in ['salt', 'iv', 'ct']: cipher[k] = cipher[k].decode()
-
-    request['data'] = json.dumps(cipher, ensure_ascii=False).replace(' ','')
+    # prepare encryption authenticated data and message
+    iv = get_random_bytes(CIPHER_TAG_BYTES)
+    adata = [
+        [
+            b64encode(iv).decode(),
+            b64encode(salt).decode(),
+            CIPHER_ITERATION_COUNT,
+            CIPHER_BLOCK_BITS,
+            CIPHER_TAG_BITS,
+            'aes',
+            'gcm',
+            'zlib'
+        ],
+        args.format,
+        int(args.burn),
+        int(args.discus)
+    ]
+    cipher_message = {'paste':text}
+    if args.debug: print("Authenticated data:\t{}".format(adata))
 
     # If we set FILE variable
     if args.file:
@@ -64,17 +87,16 @@ def send(args, api_client):
         mime = guess_type(args.file)
         if args.debug: print("Filename:\t{}\nMIME-type:\t{}".format(path_leaf(args.file), mime[0]))
 
-        file = "data:" + mime[0] + ";base64," + b64encode(contents).decode()
-        filename = path_leaf(args.file)
+        cipher_message['attachment'] = "data:" + mime[0] + ";base64," + b64encode(contents).decode()
+        cipher_message['attachment_name'] = path_leaf(args.file)
 
-        cipherfile = SJCL().encrypt(compress(file.encode('utf-8')), password, mode='gcm')
-        # TODO: should be implemented in upstream
-        for k in ['salt', 'iv', 'ct']: cipherfile[k] = cipherfile[k].decode()
-        cipherfilename = SJCL().encrypt(compress(filename.encode('utf-8')), password, mode='gcm')
-        for k in ['salt', 'iv', 'ct']: cipherfilename[k] = cipherfilename[k].decode()
+    # Encrypting message and optional file
+    cipher = AES.new(key, AES.MODE_GCM, nonce=iv, mac_len=CIPHER_TAG_BYTES)
+    cipher.update(json_encode(adata).encode())
+    ciphertext, tag = cipher.encrypt_and_digest(compress(json_encode(cipher_message).encode()))
 
-        request['attachment'] = json.dumps(cipherfile, ensure_ascii=False).replace(' ','')
-        request['attachmentname'] = json.dumps(cipherfilename, ensure_ascii=False).replace(' ','')
+    # Formatting request
+    request = json_encode({'v':2,'adata':adata,'ct':b64encode(ciphertext + tag).decode(),'meta':{'expire':args.expire}})
 
     if args.debug: print("Request:\t{}".format(request))
 
