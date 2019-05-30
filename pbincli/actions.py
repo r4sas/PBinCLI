@@ -6,6 +6,7 @@ from Crypto.Hash import HMAC, SHA256
 from Crypto.Cipher import AES
 
 from base64 import b64encode, b64decode
+from base58 import b58encode, b58decode
 from mimetypes import guess_type
 from pbincli.utils import PBinCLIException, check_readable, check_writable, json_encode
 
@@ -24,19 +25,18 @@ def path_leaf(path):
 
 
 def decompress(s):
-    return zlib.decompress(bytearray(map(ord, b64decode(s.encode('utf-8')).decode('utf-8'))), -zlib.MAX_WBITS)
+    return zlib.decompress(bytearray(map(ord, s)), -zlib.MAX_WBITS)
 
 def compress(s):
     co = zlib.compressobj(wbits=-zlib.MAX_WBITS)
     b = co.compress(s) + co.flush()
-
-    return b64encode(''.join(map(chr, b)).encode('utf-8'))
+    return b
 
 def send(args, api_client):
-    if args.stdin:
-        text = args.stdin.read()
-    elif args.text:
+    if args.text:
         text = args.text
+    elif args.stdin:
+        text = args.stdin.read()
     elif args.file:
         text = "Sending a file to you!"
     else:
@@ -45,14 +45,15 @@ def send(args, api_client):
 
     # Decryption key consists of some random bytes (base64 or base58 encoded in URL hash) and an optional user defined password
     password = get_random_bytes(CIPHER_BLOCK_BYTES)
-    passphrase = b64encode(password)
-    if args.debug: print("Passphrase:\t{}".format(passphrase))
 
     # If we set PASSWORD variable
     if args.password:
-        password += args.password.encode('utf-8')
+        password += args.password
 
-    if args.debug: print("Password:\t{}".format(password))
+    passphrase = b58encode(password)
+    if args.debug:
+        print("Passphrase:\t{}".format(passphrase))
+        print("Password:\t{}".format(password))
 
     # Key derivation, using PBKDF2 and SHA256 HMAC
     salt = get_random_bytes(CIPHER_SALT_BYTES)
@@ -75,9 +76,9 @@ def send(args, api_client):
         int(args.burn),
         int(args.discus)
     ]
-    cipher_message = {'paste':text}
     if args.debug: print("Authenticated data:\t{}".format(adata))
 
+    cipher_message = {'paste':text}
     # If we set FILE variable
     if args.file:
         check_readable(args.file)
@@ -89,6 +90,7 @@ def send(args, api_client):
 
         cipher_message['attachment'] = "data:" + mime[0] + ";base64," + b64encode(contents).decode()
         cipher_message['attachment_name'] = path_leaf(args.file)
+    if args.debug: print("Cipher message:\t{}".format(json_encode(cipher_message).encode()))
 
     # Encrypting message and optional file
     cipher = AES.new(key, AES.MODE_GCM, nonce=iv, mac_len=CIPHER_TAG_BYTES)
