@@ -3,7 +3,7 @@
 from setuptools import setup
 from pbincli.__init__ import __version__ as pbincli_version
 
-with open("README.md") as readme:
+with open("README.rst") as readme:
     long_description = readme.read()
 
 with open("requirements.txt") as f:
