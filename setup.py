@@ -17,10 +17,10 @@ setup(
     author_email='r4sas@i2pmail.org',
     url='https://github.com/r4sas/PBinCLI',
     keywords='privatebin',
-    license='DWTFYWWI',
+    license='MIT',
     classifiers=[
         'Development Status :: 4 - Beta',
-        'License :: Other/Proprietary License',
+        'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
         'Environment :: Console',
     ],

@@ -57,5 +57,5 @@ Write a more complete usage documentation.
 
 License
 -------
-This project is licensed under the DWTFYWWI license, which can be found in the file
+This project is licensed under the MIT license, which can be found in the file
 [LICENSE](LICENSE) in the root of the project source code.
