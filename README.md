@@ -1,4 +1,5 @@
 [![GitHub license](https://img.shields.io/github/license/r4sas/PBinCLI.svg)](https://github.com/r4sas/PBinCLI/blob/master/LICENSE)
+[![GitHub tag](https://img.shields.io/github/tag/r4sas/PBinCLI.svg)](https://github.com/r4sas/PBinCLI/tags/)
 [![GitHub release](https://img.shields.io/github/release/r4sas/PBinCLI.svg)](https://github.com/r4sas/PBinCLI/releases/)
 
 PBinCLI

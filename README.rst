@@ -5,6 +5,11 @@
    :alt: GitHub license
 
 
+.. image:: https://img.shields.io/github/tag/r4sas/PBinCLI.svg
+   :target: https://github.com/r4sas/PBinCLI/tags/
+   :alt: GitHub tag
+
+
 .. image:: https://img.shields.io/github/release/r4sas/PBinCLI.svg
    :target: https://github.com/r4sas/PBinCLI/releases/
    :alt: GitHub release
