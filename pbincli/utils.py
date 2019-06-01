@@ -1,8 +1,13 @@
-import json, os
-
+import json, ntpath, os, zlib
+from base64 import b64encode, b64decode
 
 class PBinCLIException(Exception):
     pass
+
+
+def path_leaf(path):
+    head, tail = ntpath.split(path)
+    return tail or ntpath.basename(head)
 
 
 def check_readable(f):
@@ -17,34 +22,12 @@ def check_writable(f):
         raise PBinCLIException("Path is not writable: {}".format(f))
 
 
-# http://stackoverflow.com/a/33571117
-def json_load_byteified(file_handle):
-    return _byteify(
-        json.load(file_handle, object_hook=_byteify),
-        ignore_dicts=True
-    )
+def decompress(s):
+    return zlib.decompress(bytearray(map(ord, b64decode(s.encode('utf-8')).decode('utf-8'))), -zlib.MAX_WBITS)
 
 
-def json_loads_byteified(json_text):
-    return _byteify(
-        json.loads(json_text, object_hook=_byteify),
-        ignore_dicts=True
-    )
+def compress(s):
+    co = zlib.compressobj(wbits=-zlib.MAX_WBITS)
+    b = co.compress(s) + co.flush()
 
-
-def _byteify(data, ignore_dicts = False):
-    # if this is a unicode string, return its string representation
-    if isinstance(data, str):
-        return data.encode('utf-8')
-    # if this is a list of values, return list of byteified values
-    if isinstance(data, list):
-        return [ _byteify(item, ignore_dicts=True) for item in data ]
-    # if this is a dictionary, return dictionary of byteified keys and values
-    # but only if we haven't already byteified it
-    if isinstance(data, dict) and not ignore_dicts:
-        return {
-            _byteify(key, ignore_dicts=True): _byteify(value, ignore_dicts=True)
-            for key, value in data.iteritems()
-        }
-    # if it's anything else, return it in its original form
-    return data
+    return b64encode(''.join(map(chr, b)).encode('utf-8'))

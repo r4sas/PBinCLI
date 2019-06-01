@@ -1,27 +1,14 @@
-import json, hashlib, ntpath, os, sys, zlib
+import json, hashlib, os, sys
 import pbincli.actions
 from sjcl import SJCL
 
 from base64 import b64encode, b64decode
-from mimetypes import guess_type
-from pbincli.utils import PBinCLIException, check_readable, check_writable, json_load_byteified
-
-
-def path_leaf(path):
-    head, tail = ntpath.split(path)
-    return tail or ntpath.basename(head)
-
-
-def decompress(s):
-    return zlib.decompress(bytearray(map(ord, b64decode(s.encode('utf-8')).decode('utf-8'))), -zlib.MAX_WBITS)
-
-def compress(s):
-    co = zlib.compressobj(wbits=-zlib.MAX_WBITS)
-    b = co.compress(s) + co.flush()
-
-    return b64encode(''.join(map(chr, b)).encode('utf-8'))
+from pbincli.utils import PBinCLIException
 
 def send(args, api_client):
+    from pbincli.utils import check_readable, compress, path_leaf
+    from mimetypes import guess_type
+
     if not args.notext:
         if args.text:
             text = args.text
@@ -107,6 +94,8 @@ def send(args, api_client):
 
 
 def get(args, api_client):
+    from pbincli.utils import check_writable, decompress
+
     pasteid, passphrase = args.pasteinfo.split("#")
 
     if pasteid and passphrase:
