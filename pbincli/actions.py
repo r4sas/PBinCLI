@@ -1,4 +1,4 @@
-import json, hashlib, ntpath, sys, zlib
+import json, hashlib, sys
 from Crypto.Random import get_random_bytes
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Hash import HMAC, SHA256
@@ -6,8 +6,7 @@ from Crypto.Cipher import AES
 
 from base64 import b64encode, b64decode
 from base58 import b58encode, b58decode
-from mimetypes import guess_type
-from pbincli.utils import PBinCLIException, check_readable, check_writable, json_encode
+from pbincli.utils import json_encode
 
 # Cipher settings
 CIPHER_ITERATION_COUNT = 100000
@@ -18,31 +17,20 @@ CIPHER_TAG_BITS = int(CIPHER_BLOCK_BITS/2)
 CIPHER_TAG_BYTES = int(CIPHER_TAG_BITS/8)
 
 
-def path_leaf(path):
-    head, tail = ntpath.split(path)
-    return tail or ntpath.basename(head)
-
-
-def decompress(s):
-    return zlib.decompress(s, -zlib.MAX_WBITS)
-
-def compress(s):
-    # using compressobj as compress doesn't let us specify wbits
-    # needed to get the raw stream without headers
-    co = zlib.compressobj(wbits=-zlib.MAX_WBITS)
-    b = co.compress(s) + co.flush()
-    return b
-
 def send(args, api_client):
-    if args.text:
-        text = args.text
-    elif args.stdin:
-        text = args.stdin.read()
-    elif args.file:
-        text = "Sending a file to you!"
-    else:
+    from pbincli.utils import check_readable, compress, path_leaf
+    from mimetypes import guess_type
+
+    if not args.notext:
+        if args.text:
+            text = args.text
+        elif args.stdin:
+            text = args.stdin.read()
+    elif not args.file:
         print("Nothing to send!")
         sys.exit(1)
+    else:
+        text = ""
 
     # Decryption key consists of some random bytes (base64 or base58 encoded in URL hash) and an optional user defined password
     password = get_random_bytes(CIPHER_BLOCK_BYTES)
@@ -84,10 +72,14 @@ def send(args, api_client):
         with open(args.file, "rb") as f:
             contents = f.read()
             f.close()
-        mime = guess_type(args.file)
-        if args.debug: print("Filename:\t{}\nMIME-type:\t{}".format(path_leaf(args.file), mime[0]))
+        mime = guess_type(args.file, strict=False)[0]
 
-        cipher_message['attachment'] = "data:" + mime[0] + ";base64," + b64encode(contents).decode()
+        # MIME fallback
+        if not mime: mime = "application/octet-stream"
+
+        if args.debug: print("Filename:\t{}\nMIME-type:\t{}".format(path_leaf(args.file), mime))
+
+        cipher_message['attachment'] = "data:" + mime + ";base64," + b64encode(contents).decode()
         cipher_message['attachment_name'] = path_leaf(args.file)
     if args.debug: print("Cipher message:\t{}".format(json_encode(cipher_message)))
 
@@ -119,6 +111,8 @@ def send(args, api_client):
 
 
 def get(args, api_client):
+    from pbincli.utils import check_writable, decompress
+
     pasteid, passphrase = args.pasteinfo.split("#")
 
     if pasteid and passphrase:
@@ -154,7 +148,7 @@ def get(args, api_client):
         cipher_text = cipher_text_tag[:-CIPHER_TAG_BYTES]
         cipher_tag = cipher_text_tag[-CIPHER_TAG_BYTES:]
         cipher_message = json.loads(decompress(cipher.decrypt_and_verify(cipher_text, cipher_tag)))
-        if args.debug: print("{}\n".format(cipher_message))
+        if args.debug: print("Decoded text size: {}\n{}\n".format(len(cipher_message['paste']), cipher_message))
 
         check_writable("paste.txt")
         with open("paste.txt", "wb") as f:
