@@ -1,28 +1,45 @@
 import requests
-from pbincli.utils import json_encode
 
 class PrivateBin:
     def __init__(self, server, proxy=None):
         self.server = server
-        self.headers = {'X-Requested-With': 'JSONHttpRequest'}
+        self.__headers = {'X-Requested-With': 'JSONHttpRequest'}
         if proxy:
-            self.proxy = {proxy.split('://')[0]: proxy}
+            self.__proxy = {proxy.split('://')[0]: proxy}
         else:
-            self.proxy = {}
+            self.__proxy = {}
 
 
     def post(self, request):
-        r = requests.post(url = self.server, headers = self.headers, proxies = self.proxy, data = request)
-        return r.text
+        return requests.post(
+            url = self.server,
+            headers = self.__headers,
+            proxies = self.__proxy,
+            data = request).json()
 
 
     def get(self, request):
-        url = self.server + "?" + request
-        r = requests.get(url = url, headers = self.headers, proxies = self.proxy)
-        return r.text
+        return requests.get(
+            url = self.server + "?" + request,
+            headers = self.__headers,
+            proxies = self.__proxy).json()
 
 
-    def delete(self, pasteid, token):
-        request = json_encode({'pasteid':pasteid,'deletetoken':token})
-        r = requests.post(url = self.server, headers = self.headers, proxies = self.proxy, data = request)
-        return r.text
+    def delete(self, request):
+        from pbincli.utils import json_encode
+        return requests.post(
+            url = self.server,
+            headers = self.__headers,
+            proxies = self.__proxy,
+            data = request).json()
+
+
+    def getVersion(self, context):
+        jsonldSchema = requests.get(
+            url = self.server + context,
+            proxies = self.__proxy).json()
+        return jsonldSchema['@context']['v']['@value'] \
+            if ('@context' in jsonldSchema and
+                'v' in jsonldSchema['@context'] and
+                '@value' in jsonldSchema['@context']['v']) \
+            else 1

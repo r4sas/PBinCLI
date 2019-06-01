@@ -1,5 +1,4 @@
 import json, hashlib, ntpath, sys, zlib
-import pbincli.actions
 from Crypto.Random import get_random_bytes
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Hash import HMAC, SHA256
@@ -109,12 +108,6 @@ def send(args, api_client):
 
     if args.debug: print("Response:\t{}\n".format(result))
 
-    try:
-        result = json.loads(result)
-    except ValueError as e:
-        print("PBinCLI Error: {}".format(e))
-        sys.exit(1)
-
     if 'status' in result and not result['status']:
         print("Paste uploaded!\nPasteID:\t{}\nPassword:\t{}\nDelete token:\t{}\n\nLink:\t\t{}?{}#{}".format(result['id'], passphrase.decode(), result['deletetoken'], api_client.server, result['id'], passphrase.decode()))
     elif 'status' in result and result['status']:
@@ -143,12 +136,6 @@ def get(args, api_client):
         sys.exit(1)
 
     if args.debug: print("Response:\t{}\n".format(result))
-
-    try:
-        result = json.loads(result)
-    except ValueError as e:
-        print("PBinCLI Error: {}".format(e))
-        sys.exit(1)
 
     if 'status' in result and not result['status']:
         print("Paste received!")
@@ -222,16 +209,10 @@ def delete(args, api_client):
 
     if args.debug: print("PasteID:\t{}\nToken:\t\t{}".format(pasteid, token))
 
-    result = api_client.delete(pasteid, token)
+    result = api_client.delete(json_encode({'pasteid':pasteid,'deletetoken':token}))
 
     if args.debug: print("Response:\t{}\n".format(result))
 
-    try:
-        result = json.loads(result)
-    except ValueError as e:
-        print("PBinCLI Error: {}".format(e))
-        sys.exit(1)
-    
     if 'status' in result and not result['status']:
         print("Paste successfully deleted!")
     elif 'status' in result and result['status']:
