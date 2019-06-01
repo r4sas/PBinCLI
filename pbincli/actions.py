@@ -1,26 +1,9 @@
-import json, hashlib, sys
+from pbincli.format import Paste
+from sys import exit
 from Crypto.Random import get_random_bytes
-from Crypto.Protocol.KDF import PBKDF2
-from Crypto.Hash import HMAC, SHA256
-from Crypto.Cipher import AES
-
-from base64 import b64encode, b64decode
-from base58 import b58encode, b58decode
-from pbincli.utils import json_encode
-
-# Cipher settings
-CIPHER_ITERATION_COUNT = 100000
-CIPHER_SALT_BYTES = 8
-CIPHER_BLOCK_BITS = 256
-CIPHER_BLOCK_BYTES = int(CIPHER_BLOCK_BITS/8)
-CIPHER_TAG_BITS = int(CIPHER_BLOCK_BITS/2)
-CIPHER_TAG_BYTES = int(CIPHER_TAG_BITS/8)
 
 
 def send(args, api_client):
-    from pbincli.utils import check_readable, compress, path_leaf
-    from mimetypes import guess_type
-
     if not args.notext:
         if args.text:
             text = args.text
@@ -28,106 +11,68 @@ def send(args, api_client):
             text = args.stdin.read()
     elif not args.file:
         print("Nothing to send!")
-        sys.exit(1)
+        exit(1)
     else:
         text = ""
 
-    # Decryption key consists of some random bytes (base64 or base58 encoded in URL hash) and an optional user defined password
-    password = get_random_bytes(CIPHER_BLOCK_BYTES)
+    paste = Paste.getInstance(version = api_client.getVersion())
+    paste.generateKey()
+    paste.setText(text)
 
     # If we set PASSWORD variable
     if args.password:
-        password += args.password
+        paste.setPassword(args.password)
 
-    passphrase = b58encode(password)
-    if args.debug: print("Passphrase:\t{}\nPassword:\t{}".format(passphrase, password))
-
-    # Key derivation, using PBKDF2 and SHA256 HMAC
-    salt = get_random_bytes(CIPHER_SALT_BYTES)
-    key = PBKDF2(password, salt, dkLen=CIPHER_BLOCK_BYTES, count=CIPHER_ITERATION_COUNT, prf=lambda password, salt: HMAC.new(password, salt, SHA256).digest())
-
-    # prepare encryption authenticated data and message
-    iv = get_random_bytes(CIPHER_TAG_BYTES)
-    adata = [
-        [
-            b64encode(iv).decode(),
-            b64encode(salt).decode(),
-            CIPHER_ITERATION_COUNT,
-            CIPHER_BLOCK_BITS,
-            CIPHER_TAG_BITS,
-            'aes',
-            'gcm',
-            'zlib'
-        ],
-        args.format,
-        int(args.burn),
-        int(args.discus)
-    ]
-    if args.debug: print("Authenticated data:\t{}".format(adata))
-
-    cipher_message = {'paste':text}
     # If we set FILE variable
     if args.file:
-        check_readable(args.file)
-        with open(args.file, "rb") as f:
-            contents = f.read()
-            f.close()
-        mime = guess_type(args.file, strict=False)[0]
-
-        # MIME fallback
-        if not mime: mime = "application/octet-stream"
-
-        if args.debug: print("Filename:\t{}\nMIME-type:\t{}".format(path_leaf(args.file), mime))
-
-        cipher_message['attachment'] = "data:" + mime + ";base64," + b64encode(contents).decode()
-        cipher_message['attachment_name'] = path_leaf(args.file)
-    if args.debug: print("Cipher message:\t{}".format(json_encode(cipher_message)))
-
-    # Encrypting message and optional file
-    cipher = AES.new(key, AES.MODE_GCM, nonce=iv, mac_len=CIPHER_TAG_BYTES)
-    cipher.update(json_encode(adata))
-    ciphertext, tag = cipher.encrypt_and_digest(compress(json_encode(cipher_message)))
-
-    # Formatting request
-    request = json_encode({'v':2,'adata':adata,'ct':b64encode(ciphertext + tag).decode(),'meta':{'expire':args.expire}})
+        paste.setAttachment(args.file)
+    paste.encrypt(
+        formatter = args.format,
+        burnafterreading = args.burn,
+        discussion = args.discus,
+        expiration = args.expire)
+    request = paste.getJson()
 
     if args.debug: print("Request:\t{}".format(request))
 
     # If we use dry option, exit now
-    if args.dry: sys.exit(0)
+    if args.dry: exit(0)
 
     result = api_client.post(request)
 
     if args.debug: print("Response:\t{}\n".format(result))
 
     if 'status' in result and not result['status']:
-        print("Paste uploaded!\nPasteID:\t{}\nPassword:\t{}\nDelete token:\t{}\n\nLink:\t\t{}?{}#{}".format(result['id'], passphrase.decode(), result['deletetoken'], api_client.server, result['id'], passphrase.decode()))
+        passphrase = paste.getHash()
+        print("Paste uploaded!\nPasteID:\t{}\nPassword:\t{}\nDelete token:\t{}\n\nLink:\t\t{}?{}#{}".format(
+            result['id'],
+            passphrase,
+            result['deletetoken'],
+            api_client.server,
+            result['id'],
+            passphrase))
     elif 'status' in result and result['status']:
         print("Something went wrong...\nError:\t\t{}".format(result['message']))
-        sys.exit(1)
+        exit(1)
     else:
         print("Something went wrong...\nError: Empty response.")
-        sys.exit(1)
+        exit(1)
 
 
 def get(args, api_client):
-    from pbincli.utils import check_writable, decompress
+    from pbincli.utils import check_writable
 
     pasteid, passphrase = args.pasteinfo.split("#")
-
     if pasteid and passphrase:
         if args.debug: print("PasteID:\t{}\nPassphrase:\t{}".format(pasteid, passphrase))
 
-        password = b58decode(passphrase)
         if args.password:
-            password += args.password
-
-        if args.debug: print("Password:\t{}".format(password))
+            if args.debug: print("Password:\t{}".format(args.password))
 
         result = api_client.get(pasteid)
     else:
         print("PBinCLI error: Incorrect request")
-        sys.exit(1)
+        exit(1)
 
     if args.debug: print("Response:\t{}\n".format(result))
 
@@ -135,69 +80,57 @@ def get(args, api_client):
         print("Paste received!")
         if args.debug: print("Message:\t{}\nAuthentication data:\t{}".format(result['ct'], result['adata']))
 
-        # Key derivation, using PBKDF2 and SHA256 HMAC
-        iv = b64decode(result['adata'][0][0])
-        salt = b64decode(result['adata'][0][1])
-        key = PBKDF2(password, salt, dkLen=CIPHER_BLOCK_BYTES, count=CIPHER_ITERATION_COUNT, prf=lambda password, salt: HMAC.new(password, salt, SHA256).digest())
+        paste = Paste.getInstance(version = result['v'] if 'v' in result else 1)
+        paste.setPaste(result)
+        paste.setHash(passphrase)
+        if args.password:
+            paste.setPassword(args.password)
+        paste.decrypt()
+        text = paste.getText()
+        if args.debug: print("Decoded text size: {}\n".format(len(text)))
 
-        # Decrypting message
-        cipher = AES.new(key, AES.MODE_GCM, nonce=iv, mac_len=CIPHER_TAG_BYTES)
-        cipher.update(json_encode(result['adata']))
-        # Cut the cipher text into message and tag
-        cipher_text_tag = b64decode(result['ct'])
-        cipher_text = cipher_text_tag[:-CIPHER_TAG_BYTES]
-        cipher_tag = cipher_text_tag[-CIPHER_TAG_BYTES:]
-        cipher_message = json.loads(decompress(cipher.decrypt_and_verify(cipher_text, cipher_tag)))
-        if args.debug: print("Decoded text size: {}\n{}\n".format(len(cipher_message['paste']), cipher_message))
-
-        check_writable("paste.txt")
-        with open("paste.txt", "wb") as f:
-            f.write(cipher_message['paste'].encode())
+        check_writable('paste.txt')
+        with open('paste.txt', 'wb') as f:
+            f.write(text)
             f.close
 
-        if 'attachment' in cipher_message and 'attachment_name' in cipher_message:
-            print("Found file, attached to paste. Decoding it and saving")
+        attachment, attachment_name = paste.getAttachment()
+        if attachment:
+            print('Found file, attached to paste. Decoding it and saving')
 
-            if args.debug: print("Name:\t{}\nData:\t{}".format(cipher_message['attachment_name'], cipher_message['attachment']))
+            if args.debug: print("Name:\t{}\nData:\t{}".format(attachment_name, attachment))
 
-            file = b64decode(cipher_message['attachment'].split(',', 1)[1])
-
-            check_writable(cipher_message['attachment_name'])
-            with open(cipher_message['attachment_name'], "wb") as f:
-                f.write(file)
+            check_writable(attachment_name)
+            with open(attachment_name, 'wb') as f:
+                f.write(attachment)
                 f.close
 
         # burn after reading via API, only required for PrivateBin < 1.2
-        if 'burnafterreading' in result['meta'] and result['meta']['burnafterreading']:
+        if 'meta' in result and 'burnafterreading' in result['meta'] and result['meta']['burnafterreading']:
             print("Burn afrer reading flag found. Deleting paste...")
             result = api_client.delete(pasteid, 'burnafterreading')
 
             if args.debug: print("Delete response:\t{}\n".format(result))
 
-            try:
-                result = json.loads(result)
-            except ValueError as e:
-                print("PBinCLI Error: {}".format(e))
-                sys.exit(1)
-
             if 'status' in result and not result['status']:
                 print("Paste successfully deleted!")
             elif 'status' in result and result['status']:
                 print("Something went wrong...\nError:\t\t{}".format(result['message']))
-                sys.exit(1)
+                exit(1)
             else:
                 print("Something went wrong...\nError: Empty response.")
-                sys.exit(1)
+                exit(1)
 
     elif 'status' in result and result['status']:
         print("Something went wrong...\nError:\t\t{}".format(result['message']))
-        sys.exit(1)
+        exit(1)
     else:
         print("Something went wrong...\nError: Empty response.")
-        sys.exit(1)
+        exit(1)
 
 
 def delete(args, api_client):
+    from pbincli.utils import json_encode
     pasteid = args.paste
     token = args.token
 
@@ -211,7 +144,7 @@ def delete(args, api_client):
         print("Paste successfully deleted!")
     elif 'status' in result and result['status']:
         print("Something went wrong...\nError:\t\t{}".format(result['message']))
-        sys.exit(1)
+        exit(1)
     else:
         print("Something went wrong...\nError: Empty response.")
-        sys.exit(1)
+        exit(1)

@@ -34,9 +34,9 @@ class PrivateBin:
             data = request).json()
 
 
-    def getVersion(self, context):
+    def getVersion(self):
         jsonldSchema = requests.get(
-            url = self.server + context,
+            url = self.server + '?jsonld=paste',
             proxies = self.__proxy).json()
         return jsonldSchema['@context']['v']['@value'] \
             if ('@context' in jsonldSchema and
