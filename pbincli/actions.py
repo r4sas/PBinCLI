@@ -25,9 +25,11 @@ def path_leaf(path):
 
 
 def decompress(s):
-    return zlib.decompress(bytearray(map(ord, s)), -zlib.MAX_WBITS)
+    return zlib.decompress(s, -zlib.MAX_WBITS)
 
 def compress(s):
+    # using compressobj as compress doesn't let us specify wbits
+    # needed to get the raw stream without headers
     co = zlib.compressobj(wbits=-zlib.MAX_WBITS)
     b = co.compress(s) + co.flush()
     return b
@@ -51,9 +53,7 @@ def send(args, api_client):
         password += args.password
 
     passphrase = b58encode(password)
-    if args.debug:
-        print("Passphrase:\t{}".format(passphrase))
-        print("Password:\t{}".format(password))
+    if args.debug: print("Passphrase:\t{}\nPassword:\t{}".format(passphrase, password))
 
     # Key derivation, using PBKDF2 and SHA256 HMAC
     salt = get_random_bytes(CIPHER_SALT_BYTES)
@@ -90,12 +90,12 @@ def send(args, api_client):
 
         cipher_message['attachment'] = "data:" + mime[0] + ";base64," + b64encode(contents).decode()
         cipher_message['attachment_name'] = path_leaf(args.file)
-    if args.debug: print("Cipher message:\t{}".format(json_encode(cipher_message).encode()))
+    if args.debug: print("Cipher message:\t{}".format(json_encode(cipher_message)))
 
     # Encrypting message and optional file
     cipher = AES.new(key, AES.MODE_GCM, nonce=iv, mac_len=CIPHER_TAG_BYTES)
-    cipher.update(json_encode(adata).encode())
-    ciphertext, tag = cipher.encrypt_and_digest(compress(json_encode(cipher_message).encode()))
+    cipher.update(json_encode(adata))
+    ciphertext, tag = cipher.encrypt_and_digest(compress(json_encode(cipher_message)))
 
     # Formatting request
     request = json_encode({'v':2,'adata':adata,'ct':b64encode(ciphertext + tag).decode(),'meta':{'expire':args.expire}})
@@ -131,11 +131,9 @@ def get(args, api_client):
     if pasteid and passphrase:
         if args.debug: print("PasteID:\t{}\nPassphrase:\t{}".format(pasteid, passphrase))
 
+        password = b58decode(passphrase)
         if args.password:
-            digest = hashlib.sha256(args.password.encode("UTF-8")).hexdigest()
-            password = passphrase + digest.encode("UTF-8")
-        else:
-            password = passphrase
+            password += args.password
 
         if args.debug: print("Password:\t{}".format(password))
 
@@ -153,41 +151,42 @@ def get(args, api_client):
         sys.exit(1)
 
     if 'status' in result and not result['status']:
-        print("Paste received! Text inside:")
-        data = json.loads(result['data'])
+        print("Paste received!")
+        if args.debug: print("Message:\t{}\nAuthentication data:\t{}".format(result['ct'], result['adata']))
 
-        if args.debug: print("Text:\t{}\n".format(data))
+        # Key derivation, using PBKDF2 and SHA256 HMAC
+        iv = b64decode(result['adata'][0][0])
+        salt = b64decode(result['adata'][0][1])
+        key = PBKDF2(password, salt, dkLen=CIPHER_BLOCK_BYTES, count=CIPHER_ITERATION_COUNT, prf=lambda password, salt: HMAC.new(password, salt, SHA256).digest())
 
-        text = SJCL().decrypt(data, password)
-        print("{}\n".format(decompress(text.decode())))
+        # Decrypting message
+        cipher = AES.new(key, AES.MODE_GCM, nonce=iv, mac_len=CIPHER_TAG_BYTES)
+        cipher.update(json_encode(result['adata']))
+        # Cut the cipher text into message and tag
+        cipher_text_tag = b64decode(result['ct'])
+        cipher_text = cipher_text_tag[:-CIPHER_TAG_BYTES]
+        cipher_tag = cipher_text_tag[-CIPHER_TAG_BYTES:]
+        cipher_message = json.loads(decompress(cipher.decrypt_and_verify(cipher_text, cipher_tag)))
+        if args.debug: print("{}\n".format(cipher_message))
 
         check_writable("paste.txt")
         with open("paste.txt", "wb") as f:
-            f.write(decompress(text.decode()))
+            f.write(cipher_message['paste'].encode())
             f.close
 
-        if 'attachment' in result and 'attachmentname' in result:
+        if 'attachment' in cipher_message and 'attachment_name' in cipher_message:
             print("Found file, attached to paste. Decoding it and saving")
 
-            cipherfile = json.loads(result['attachment']) 
-            cipherfilename = json.loads(result['attachmentname'])
+            if args.debug: print("Name:\t{}\nData:\t{}".format(cipher_message['attachment_name'], cipher_message['attachment']))
 
-            if args.debug: print("Name:\t{}\nData:\t{}".format(cipherfilename, cipherfile))
+            file = b64decode(cipher_message['attachment'].split(',', 1)[1])
 
-            attachmentf = SJCL().decrypt(cipherfile, password)
-            attachmentname = SJCL().decrypt(cipherfilename, password)
-
-            attachment = decompress(attachmentf.decode('utf-8')).decode('utf-8').split(',', 1)[1]
-            file = b64decode(attachment)
-            filename = decompress(attachmentname.decode('utf-8')).decode('utf-8')
-
-            print("Filename:\t{}\n".format(filename))
-
-            check_writable(filename)
-            with open(filename, "wb") as f:
+            check_writable(cipher_message['attachment_name'])
+            with open(cipher_message['attachment_name'], "wb") as f:
                 f.write(file)
                 f.close
 
+        # burn after reading via API, only required for PrivateBin < 1.2
         if 'burnafterreading' in result['meta'] and result['meta']['burnafterreading']:
             print("Burn afrer reading flag found. Deleting paste...")
             result = api_client.delete(pasteid, 'burnafterreading')

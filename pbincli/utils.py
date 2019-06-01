@@ -17,4 +17,4 @@ def check_writable(f):
         raise PBinCLIException("Path is not writable: {}".format(f))
 
 def json_encode(d):
-    return json.dumps(d, separators=(',',':'))
+    return json.dumps(d, separators=(',',':')).encode()
