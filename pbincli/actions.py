@@ -22,15 +22,16 @@ def compress(s):
     return b64encode(''.join(map(chr, b)).encode('utf-8'))
 
 def send(args, api_client):
-    if args.stdin:
-        text = args.stdin.read()
-    elif args.text:
-        text = args.text
-    elif args.file:
-        text = "Sending a file to you!"
-    else:
+    if not args.notext:
+        if args.text:
+            text = args.text
+        elif args.stdin:
+            text = args.stdin.read()
+    elif not args.file:
         print("Nothing to send!")
         sys.exit(1)
+    else:
+        text = ""
 
     # Formatting request
     request = {'expire':args.expire,'formatter':args.format,'burnafterreading':int(args.burn),'opendiscussion':int(args.discus)}
@@ -61,8 +62,12 @@ def send(args, api_client):
         with open(args.file, "rb") as f:
             contents = f.read()
             f.close()
-        mime = guess_type(args.file)
-        if args.debug: print("Filename:\t{}\nMIME-type:\t{}".format(path_leaf(args.file), mime[0]))
+        mime = guess_type(args.file, strict=False)[0]
+
+        # MIME fallback
+        if not mime: mime = "application/octet-stream"
+
+        if args.debug: print("Filename:\t{}\nMIME-type:\t{}".format(path_leaf(args.file), mime))
 
         file = "data:" + mime[0] + ";base64," + b64encode(contents).decode()
         filename = path_leaf(args.file)
@@ -135,12 +140,16 @@ def get(args, api_client):
         if args.debug: print("Text:\t{}\n".format(data))
 
         text = SJCL().decrypt(data, password)
-        print("{}\n".format(decompress(text.decode())))
 
-        check_writable("paste.txt")
-        with open("paste.txt", "wb") as f:
-            f.write(decompress(text.decode()))
-            f.close
+        if args.debug: print("Decoded text size: {}\n".format(len(text)))
+
+        if len(text):
+            print("{}\n".format(decompress(text.decode())))
+
+            check_writable("paste.txt")
+            with open("paste.txt", "wb") as f:
+                f.write(decompress(text.decode()))
+                f.close
 
         if 'attachment' in result and 'attachmentname' in result:
             print("Found file, attached to paste. Decoding it and saving")
