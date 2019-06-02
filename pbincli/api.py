@@ -26,7 +26,6 @@ class PrivateBin:
 
 
     def delete(self, request):
-        from pbincli.utils import json_encode
         return requests.post(
             url = self.server,
             headers = self.__headers,
