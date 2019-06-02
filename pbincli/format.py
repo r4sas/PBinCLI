@@ -22,6 +22,7 @@ class Paste:
 
 
     def setVersion(self, version):
+        if self._debug: print("Set paste version to {}".format(version))
         self._version = version
 
 
@@ -114,16 +115,16 @@ class Paste:
         from json import loads as json_decode
 
         if self._version == 2:
-            iv = b64decode(self._paste['adata'][0][0])
-            salt = b64decode(self._paste['adata'][0][1])
+            iv = b64decode(self._data['adata'][0][0])
+            salt = b64decode(self._data['adata'][0][1])
             key = self.__deriveKey(salt)
 
-            cipher = self.__initializeCipher(key, iv, self._paste['adata'])
+            cipher = self.__initializeCipher(key, iv, self._data['adata'])
             # Cut the cipher text into message and tag
-            cipher_text_tag = b64decode(self._paste['ct'])
+            cipher_text_tag = b64decode(self._data['ct'])
             cipher_text = cipher_text_tag[:-CIPHER_TAG_BYTES]
             cipher_tag = cipher_text_tag[-CIPHER_TAG_BYTES:]
-            cipher_message = json_decode(decompress(cipher.decrypt_and_verify(cipher_text, cipher_tag), self._version))
+            cipher_message = json_decode(decompress(cipher.decrypt_and_verify(cipher_text, cipher_tag), self._version).decode())
 
             self._text = cipher_message['paste'].encode()
             if 'attachment' in cipher_message and 'attachment_name' in cipher_message:
