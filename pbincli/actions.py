@@ -33,8 +33,9 @@ def send(args, api_client):
 
     request = paste.getJSON()
 
-    if args.debug: print("Passphrase:\t{}".format(paste.getHash()))
-    if args.debug: print("Request:\t{}".format(request))
+    if args.debug: 
+        print("Passphrase:\t{}".format(paste.getHash()))
+        print("Request:\t{}".format(request))
 
     # If we use dry option, exit now
     if args.dry: exit(0)
@@ -76,7 +77,7 @@ def get(args, api_client):
 
     if args.debug: print("PasteID:\t{}\nPassphrase:\t{}".format(pasteid, passphrase))
 
-    paste = Paste()
+    paste = Paste(args.debug)
 
     if args.password:
         paste.setPassword(args.password)
@@ -90,11 +91,9 @@ def get(args, api_client):
         print("Paste received!")
 
         version = result['v'] if 'v' in result else 1
-        if args.debug: print("Paste version:\t{}\n".format(version))
         paste.setVersion(version)
         
         if version == 2:
-            #if args.debug: print("Message:\t{}\nAuthentication data:\t{}".format(result['ct'], result['adata']))
             if args.debug: print("Authentication data:\t{}".format(result['adata']))
 
         paste.setHash(passphrase)
