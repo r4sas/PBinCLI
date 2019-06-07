@@ -14,7 +14,16 @@ def send(args, api_client):
         text = ""
 
     paste = Paste(args.debug)
-    paste.setVersion(api_client.getVersion())
+
+    # get from server supported paste format version and update object
+    version = api_client.getVersion()
+    paste.setVersion(version)
+
+    # set compression type, works only on v2 pastes
+    if version == 2:
+        paste.setCompression(args.compression)
+
+    # add text in paste (if it provided)
     paste.setText(text)
 
     # If we set PASSWORD variable

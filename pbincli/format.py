@@ -1,6 +1,7 @@
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
+from pbincli.utils import PBinCLIException
 
 CIPHER_ITERATION_COUNT = 100000
 CIPHER_SALT_BYTES = 8
@@ -12,12 +13,13 @@ CIPHER_TAG_BYTES = int(CIPHER_TAG_BITS/8)
 class Paste:
     def __init__(self, debug=False):
         self._version = 2
-        self._data = ""
-        self._text = ""
-        self._attachment = ""
-        self._attachment_name = ""
+        self._compression = 'zlib'
+        self._data = ''
+        self._text = ''
+        self._attachment = ''
+        self._attachment_name = ''
         self._key = get_random_bytes(CIPHER_BLOCK_BYTES)
-        self._password = ""
+        self._password = ''
         self._debug = debug
 
 
@@ -51,6 +53,9 @@ class Paste:
 
         self._attachment = 'data:' + mime + ';base64,' + b64encode(contents).decode()
         self._attachment_name = path_leaf(path)
+
+    def setCompression(self, comp):
+        self._compression = comp
 
 
     def getText(self):
@@ -117,7 +122,14 @@ class Paste:
     def __decompress(self, s):
         import zlib
         if self._version == 2:
-            return zlib.decompress(s, -zlib.MAX_WBITS)
+            if self._compression == 'zlib':
+                # decompress data
+                return zlib.decompress(s, -zlib.MAX_WBITS)
+            elif self._compression == 'none':
+                # nothing to do, just return original data
+                return s
+            else:
+                raise PBinCLIException('Unknown compression type provided in paste!')
         else:
             return zlib.decompress(bytearray(map(ord, b64decode(s.encode('utf-8')).decode('utf-8'))), -zlib.MAX_WBITS)
 
@@ -125,10 +137,16 @@ class Paste:
     def __compress(self, s):
         import zlib
         if self._version == 2:
-            # using compressobj as compress doesn't let us specify wbits
-            # needed to get the raw stream without headers
-            co = zlib.compressobj(wbits=-zlib.MAX_WBITS)
-            return co.compress(s) + co.flush()
+            if self._compression == 'zlib':
+                # using compressobj as compress doesn't let us specify wbits
+                # needed to get the raw stream without headers
+                co = zlib.compressobj(wbits=-zlib.MAX_WBITS)
+                return co.compress(s) + co.flush()
+            elif self._compression == 'none':
+                # nothing to do, just return original data
+                return s
+            else:
+                raise PBinCLIException('Unknown compression type provided!')
         else:
             co = zlib.compressobj(wbits=-zlib.MAX_WBITS)
             b = co.compress(s) + co.flush()
@@ -142,6 +160,9 @@ class Paste:
             iv = b64decode(self._data['adata'][0][0])
             salt = b64decode(self._data['adata'][0][1])
             key = self.__deriveKey(salt)
+
+            # Get compression type from received paste
+            self._compression = self._data['adata'][0][7]
 
             cipher = self.__initializeCipher(key, iv, self._data['adata'])
             # Cut the cipher text into message and tag
@@ -203,7 +224,7 @@ class Paste:
                     CIPHER_TAG_BITS,
                     'aes',
                     'gcm',
-                    'zlib'
+                    self._compression
                 ],
                 formatter,
                 int(burnafterreading),

@@ -36,6 +36,8 @@ def main():
     send_parser.add_argument("-t", "--text", help="comment in quotes. Ignored if used stdin")
     send_parser.add_argument("-q", "--notext", default=False, action="store_true", help="don't send text in paste")
     send_parser.add_argument("-p", "--password", help="password for encrypting paste")
+    send_parser.add_argument("-c", "--compression", default="zlib", action="store",
+        choices=["zlib", "none"], help="set compression for paste (default: zlib). Note: works only on v2 paste format")
     send_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
     send_parser.add_argument("--dry", default=False, action="store_true", help="invoke dry run")
     send_parser.add_argument("-f", "--file", help="example: image.jpg or full path to file")
