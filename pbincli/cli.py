@@ -23,41 +23,35 @@ def main():
     subparsers = parser.add_subparsers(title="actions", help="List of commands")
 
     # a send command
-    send_parser = subparsers.add_parser("send", description="Send data to PrivateBin instance", usage="""
-%(prog)s --burn --discus --expire 1day --format plaintext \\
-    --text "My file" --password mypass image.txt"""
-    )
-    send_parser.add_argument("-B", "--burn", default=False, action="store_true", help="burn sent paste after reading")
-    send_parser.add_argument("-D", "--discus", default=False, action="store_true", help="open discussion of sent paste")
+    send_parser = subparsers.add_parser("send", description="Send data to PrivateBin instance")
+    send_parser.add_argument("-t", "--text", help="text in quotes. Ignored if used stdin. If not used, forcefully used stdin")
+    send_parser.add_argument("-f", "--file", help="example: image.jpg or full path to file")
+    send_parser.add_argument("-p", "--password", help="password for encrypting paste")
     send_parser.add_argument("-E", "--expire", default="1day", action="store",
-        choices=["5min", "10min", "1hour", "1day", "1week", "1month", "1year", "never"], help="expiration of paste (default: 1day)")
+        choices=["5min", "10min", "1hour", "1day", "1week", "1month", "1year", "never"], help="paste lifetime (default: 1day)")
+    send_parser.add_argument("-B", "--burn", default=False, action="store_true", help="burn sent paste after reading")
+    send_parser.add_argument("-D", "--discus", default=False, action="store_true", help="open discussion for sent paste")
     send_parser.add_argument("-F", "--format", default="plaintext", action="store",
         choices=["plaintext", "syntaxhighlighting", "markdown"], help="format of text (default: plaintext)")
-    send_parser.add_argument("-t", "--text", help="comment in quotes. Ignored if used stdin")
     send_parser.add_argument("-q", "--notext", default=False, action="store_true", help="don't send text in paste")
-    send_parser.add_argument("-p", "--password", help="password for encrypting paste")
     send_parser.add_argument("-c", "--compression", default="zlib", action="store",
         choices=["zlib", "none"], help="set compression for paste (default: zlib). Note: works only on v2 paste format")
     send_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
     send_parser.add_argument("--dry", default=False, action="store_true", help="invoke dry run")
-    send_parser.add_argument("-f", "--file", help="example: image.jpg or full path to file")
-
     send_parser.add_argument("stdin", help="input paste text from stdin", nargs="?", type=argparse.FileType("r"), default=sys.stdin)
     send_parser.set_defaults(func=pbincli.actions.send)
 
-    get_parser = subparsers.add_parser("get", description="Get data from PrivateBin instance", usage="""
-%(prog)s pasteid#password"""
-    )
+    # a get command
+    get_parser = subparsers.add_parser("get", description="Get data from PrivateBin instance")
     get_parser.add_argument("pasteinfo", help="example: aabb#cccddd")
     get_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
     get_parser.add_argument("-p", "--password", help="password for decrypting paste")
     get_parser.set_defaults(func=pbincli.actions.get)
 
-    delete_parser = subparsers.add_parser("delete", description="Delete paste from PrivateBin instance using token", usage="""
-%(prog)s --paste aabb --token aabbcc"""
-    )
+    # a delete command
+    delete_parser = subparsers.add_parser("delete", description="Delete paste from PrivateBin instance using token")
     delete_parser.add_argument("-p", "--paste", required=True, help="paste id")
-    delete_parser.add_argument("-t", "--token", required=True, help="delete token")
+    delete_parser.add_argument("-t", "--token", required=True, help="paste deletion token")
     delete_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
     delete_parser.set_defaults(func=pbincli.actions.delete)
 
