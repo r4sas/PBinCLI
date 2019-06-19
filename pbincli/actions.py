@@ -135,18 +135,7 @@ def get(args, api_client):
 
         if version == 1 and 'meta' in result and 'burnafterreading' in result['meta'] and result['meta']['burnafterreading']:
             print("Burn afrer reading flag found. Deleting paste...")
-            result = api_client.delete(json_encode({'pasteid':pasteid,'deletetoken':'burnafterreading'}))
-
-            if args.debug: print("Delete response:\t{}\n".format(result))
-
-            if 'status' in result and not result['status']:
-                print("Paste successfully deleted!")
-            elif 'status' in result and result['status']:
-                print("Something went wrong...\nError:\t\t{}".format(result['message']))
-                exit(1)
-            else:
-                print("Something went wrong...\nError: Empty response.")
-                exit(1)
+            api_client.delete(json_encode({'pasteid':pasteid,'deletetoken':'burnafterreading'}))
 
     elif 'status' in result and result['status']:
         print("Something went wrong...\nError:\t\t{}".format(result['message']))
@@ -164,15 +153,4 @@ def delete(args, api_client):
 
     if args.debug: print("PasteID:\t{}\nToken:\t\t{}".format(pasteid, token))
 
-    result = api_client.delete(json_encode({'pasteid':pasteid,'deletetoken':token}))
-
-    if args.debug: print("Response:\t{}\n".format(result))
-
-    if 'status' in result and not result['status']:
-        print("Paste successfully deleted!")
-    elif 'status' in result and result['status']:
-        print("Something went wrong...\nError:\t\t{}".format(result['message']))
-        exit(1)
-    else:
-        print("Something went wrong...\nError: Empty response.")
-        exit(1)
+    api_client.delete(json_encode({'pasteid':pasteid,'deletetoken':token}))

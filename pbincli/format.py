@@ -120,6 +120,14 @@ class Paste:
         return cipher
 
 
+    def __preparePassKey(self):
+        if self._password:
+            digest = sha256(self._password.encode("UTF-8")).hexdigest()
+            return b64encode(self._key) + digest.encode("UTF-8")
+        else:
+            return b64encode(self._key)
+        
+
     def __decompress(self, s):
         if self._version == 2:
             if self._compression == 'zlib':
@@ -178,11 +186,7 @@ class Paste:
             from hashlib import sha256
             from sjcl import SJCL
 
-            if self._password:
-                digest = sha256(self._password.encode("UTF-8")).hexdigest()
-                password = b64encode(self._key) + digest.encode("UTF-8")
-            else:
-                password = b64encode(self._key)
+            password = self.__preparePassKey()
 
             cipher_text = json_decode(self._data['data'])
 
@@ -245,11 +249,7 @@ class Paste:
 
             self._data = {'expire':expiration,'formatter':formatter,'burnafterreading':int(burnafterreading),'opendiscussion':int(discussion)}
 
-            if self._password:
-                digest = sha256(self._password.encode("UTF-8")).hexdigest()
-                password = b64encode(self._key) + digest.encode("UTF-8")
-            else:
-                password = b64encode(self._key)
+            password = self.__preparePassKey()
 
             if self._debug: print("Password:\t{}".format(password))
 

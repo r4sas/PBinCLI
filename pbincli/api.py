@@ -32,20 +32,27 @@ class PrivateBin:
 
 
     def delete(self, request):
-        result = requests.post(
-            url = self.server,
-            headers = self.headers,
-            proxies = self.proxy,
-            data = request)
-
         # using try as workaround for versions < 1.3 due to we cant detect
         # if server used version 1.2, where auto-deletion is added
         try:
-            return result.json()
+            result = requests.post(
+                url = self.server,
+                headers = self.headers,
+                proxies = self.proxy,
+                data = request).json()
         except ValueError as e:
             # unable parse response as json because it can be empty (1.2), so simulate correct answer
             from json import loads as json_loads
-            return json_loads('{"status":0}')
+            result = json_loads('{"status":0}')
+
+        if not result['status']:
+            print("Paste successfully deleted!")
+        elif result['status']:
+            print("Something went wrong...\nError:\t\t{}".format(result['message']))
+            exit(1)
+        else:
+            print("Something went wrong...\nError: Empty response.")
+            exit(1)
 
 
     def getVersion(self):
