@@ -2,6 +2,7 @@ from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
 from pbincli.utils import PBinCLIException
+import zlib
 
 CIPHER_ITERATION_COUNT = 100000
 CIPHER_SALT_BYTES = 8
@@ -120,7 +121,6 @@ class Paste:
 
 
     def __decompress(self, s):
-        import zlib
         if self._version == 2:
             if self._compression == 'zlib':
                 # decompress data
@@ -135,7 +135,6 @@ class Paste:
 
 
     def __compress(self, s):
-        import zlib
         if self._version == 2:
             if self._compression == 'zlib':
                 # using compressobj as compress doesn't let us specify wbits
