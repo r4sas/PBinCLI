@@ -53,7 +53,8 @@ def send(args, api_client):
 
     if args.debug: print("Response:\t{}\n".format(result))
 
-    if result['status'] == 0:
+    # Paste was sent. Checking for returned status code
+    if not result['status']: # return code is zero
         passphrase = paste.getHash()
 
         print("Paste uploaded!\nPasteID:\t{}\nPassword:\t{}\nDelete token:\t{}\n\nLink:\t\t{}?{}#{}".format(
@@ -63,10 +64,10 @@ def send(args, api_client):
             api_client.server,
             result['id'],
             passphrase))
-    elif result['status']:
+    elif result['status']: # return code is other then zero
         print("Something went wrong...\nError:\t\t{}".format(result['message']))
         exit(1)
-    else:
+    else: # or here no status field in response or it is empty
         print("Something went wrong...\nError: Empty response.")
         exit(1)
 
@@ -96,7 +97,8 @@ def get(args, api_client):
 
     if args.debug: print("Response:\t{}\n".format(result))
 
-    if result['status'] == 0:
+    # Paste was received. Checking received status code
+    if not result['status']: # return code is zero
         print("Paste received!")
 
         version = result['v'] if 'v' in result else 1
@@ -137,10 +139,10 @@ def get(args, api_client):
             print("Burn afrer reading flag found. Deleting paste...")
             api_client.delete(json_encode({'pasteid':pasteid,'deletetoken':'burnafterreading'}))
 
-    elif result['status']:
+    elif result['status']: # return code is other then zero
         print("Something went wrong...\nError:\t\t{}".format(result['message']))
         exit(1)
-    else:
+    else: # or here no status field in response or it is empty
         print("Something went wrong...\nError: Empty response.")
         exit(1)
 
