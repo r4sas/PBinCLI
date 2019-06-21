@@ -113,6 +113,7 @@ class Paste:
             ).digest())
 
 
+    @classmethod
     def __initializeCipher(self, key, iv, adata):
         from pbincli.utils import json_encode
         cipher = AES.new(key, AES.MODE_GCM, nonce=iv, mac_len=CIPHER_TAG_BYTES)
@@ -126,7 +127,7 @@ class Paste:
             return b64encode(self._key) + digest.encode("UTF-8")
         else:
             return b64encode(self._key)
-        
+
 
     def __decompress(self, s):
         if self._version == 2 and self._compression == 'zlib':
@@ -188,7 +189,7 @@ class Paste:
 
             cipher_text = json_decode(self._data['data'])
 
-            if self._debug: print("Text:\t{}\n".format(data))
+            if self._debug: print("Text:\t{}\n".format(cipher_text))
 
             text = SJCL().decrypt(cipher_text, password)
 

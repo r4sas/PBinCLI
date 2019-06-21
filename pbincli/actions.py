@@ -42,7 +42,7 @@ def send(args, api_client):
 
     request = paste.getJSON()
 
-    if args.debug: 
+    if args.debug:
         print("Passphrase:\t{}".format(paste.getHash()))
         print("Request:\t{}".format(request))
 
@@ -103,7 +103,7 @@ def get(args, api_client):
 
         version = result['v'] if 'v' in result else 1
         paste.setVersion(version)
-        
+
         if version == 2:
             if args.debug: print("Authentication data:\t{}".format(result['adata']))
 
