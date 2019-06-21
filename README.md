@@ -23,7 +23,7 @@ You can create config file with variables `server` and `proxy` in `~/.config/pbi
 
 Example contents:
 
-```
+```ini
 server=https://paste.i2pd.xyz/
 proxy=http://127.0.0.1:3128
 ```

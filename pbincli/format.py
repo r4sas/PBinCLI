@@ -186,7 +186,6 @@ class Paste:
                 self._attachment = cipher_message['attachment']
                 self._attachment_name = cipher_message['attachment_name']
         else:
-            from hashlib import sha256
             from sjcl import SJCL
 
             password = self.__preparePassKey()

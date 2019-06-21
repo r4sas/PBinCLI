@@ -19,7 +19,7 @@ class PrivateBin:
 
         try:
             return result.json()
-        except:
+        except ValueError:
             print("ERROR: Unable parse response as json. Received (size = {}):\n{}".format(len(result.text), result.text))
             exit(1)
 
@@ -40,7 +40,7 @@ class PrivateBin:
                 headers = self.headers,
                 proxies = self.proxy,
                 data = request).json()
-        except:
+        except ValueError:
             # unable parse response as json because it can be empty (1.2), so simulate correct answer
             print("NOTICE: Received empty response. We interpret that as our paste has already been deleted.")
             from json import loads as json_loads

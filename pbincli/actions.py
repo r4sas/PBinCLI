@@ -76,7 +76,7 @@ def get(args, api_client):
 
     try:
         pasteid, passphrase = args.pasteinfo.split("#")
-    except:
+    except ValueError:
         print("PBinCLI error: provided info hasn't contain valid PasteID#Passphrase string")
         exit(1)
 
