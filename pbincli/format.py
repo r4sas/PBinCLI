@@ -31,7 +31,7 @@ class Paste:
 
     def setPassword(self, password):
         self._password = password
-        
+
 
     def setText(self, text):
         self._text = text
@@ -89,17 +89,18 @@ class Paste:
             return b64encode(self._key).decode()
 
 
-    def setHash(self, hash):
+    def setHash(self, passphrase):
         if self._version == 2:
             from base58 import b58decode
-            self._key = b58decode(hash)
+            self._key = b58decode(passphrase)
         else:
-            self._key = b64decode(hash)
+            self._key = b64decode(passphrase)
 
 
     def __deriveKey(self, salt):
         from Crypto.Protocol.KDF import PBKDF2
         from Crypto.Hash import HMAC, SHA256
+
         # Key derivation, using PBKDF2 and SHA256 HMAC
         return PBKDF2(
             self._key + self._password.encode(),
@@ -116,12 +117,15 @@ class Paste:
     @classmethod
     def __initializeCipher(self, key, iv, adata):
         from pbincli.utils import json_encode
+
         cipher = AES.new(key, AES.MODE_GCM, nonce=iv, mac_len=CIPHER_TAG_BYTES)
         cipher.update(json_encode(adata))
         return cipher
 
 
     def __preparePassKey(self):
+        from hashlib import sha256
+
         if self._password:
             digest = sha256(self._password.encode("UTF-8")).hexdigest()
             return b64encode(self._key) + digest.encode("UTF-8")
@@ -243,7 +247,6 @@ class Paste:
             self._data = {'v':2,'adata':adata,'ct':b64encode(ciphertext + tag).decode(),'meta':{'expire':expiration}}
 
         else:
-            from hashlib import sha256
             from sjcl import SJCL
 
             self._data = {'expire':expiration,'formatter':formatter,'burnafterreading':int(burnafterreading),'opendiscussion':int(discussion)}

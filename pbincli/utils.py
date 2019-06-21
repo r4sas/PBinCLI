@@ -1,5 +1,4 @@
 import json, ntpath, os
-from base64 import b64encode, b64decode
 
 class PBinCLIException(Exception):
     pass

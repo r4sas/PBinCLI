@@ -1,4 +1,3 @@
-from sys import exit
 from pbincli.format import Paste
 
 def send(args, api_client):
@@ -77,7 +76,7 @@ def get(args, api_client):
 
     try:
         pasteid, passphrase = args.pasteinfo.split("#")
-    except ValueError as err:
+    except:
         print("PBinCLI error: provided info hasn't contain valid PasteID#Passphrase string")
         exit(1)
 
@@ -123,7 +122,7 @@ def get(args, api_client):
             check_writable(filename)
             with open(filename, "wb") as f:
                 f.write(text)
-                f.close
+                f.close()
 
         attachment, attachment_name = paste.getAttachment()
 
@@ -133,7 +132,7 @@ def get(args, api_client):
             check_writable(attachment_name)
             with open(attachment_name, "wb") as f:
                 f.write(attachment)
-                f.close
+                f.close()
 
         if version == 1 and 'meta' in result and 'burnafterreading' in result['meta'] and result['meta']['burnafterreading']:
             print("Burn afrer reading flag found. Deleting paste...")
