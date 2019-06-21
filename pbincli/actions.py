@@ -72,7 +72,7 @@ def send(args, api_client):
 
 
 def get(args, api_client):
-    from pbincli.utils import check_writable
+    from pbincli.utils import check_writable, json_encode
 
     try:
         pasteid, passphrase = args.pasteinfo.split("#")
@@ -90,7 +90,7 @@ def get(args, api_client):
 
     if args.password:
         paste.setPassword(args.password)
-        if args.debug: print("Password:\t{}".format(password))
+        if args.debug: print("Password:\t{}".format(args.password))
 
     result = api_client.get(pasteid)
 
