@@ -129,35 +129,33 @@ class Paste:
         
 
     def __decompress(self, s):
-        if self._version == 2:
-            if self._compression == 'zlib':
-                # decompress data
-                return zlib.decompress(s, -zlib.MAX_WBITS)
-            elif self._compression == 'none':
-                # nothing to do, just return original data
-                return s
-            else:
-                raise PBinCLIException('Unknown compression type provided in paste!')
-        else:
+        if self._version == 2 and self._compression == 'zlib':
+            # decompress data
+            return zlib.decompress(s, -zlib.MAX_WBITS)
+        elif self._version == 2 and self._compression == 'none':
+            # nothing to do, just return original data
+            return s
+        elif self._version == 1:
             return zlib.decompress(bytearray(map(ord, b64decode(s.encode('utf-8')).decode('utf-8'))), -zlib.MAX_WBITS)
+        else:
+            raise PBinCLIException('Unknown compression type provided in paste!')
 
 
     def __compress(self, s):
-        if self._version == 2:
-            if self._compression == 'zlib':
-                # using compressobj as compress doesn't let us specify wbits
-                # needed to get the raw stream without headers
-                co = zlib.compressobj(wbits=-zlib.MAX_WBITS)
-                return co.compress(s) + co.flush()
-            elif self._compression == 'none':
-                # nothing to do, just return original data
-                return s
-            else:
-                raise PBinCLIException('Unknown compression type provided!')
-        else:
+        if self._version == 2 and self._compression == 'zlib':
+            # using compressobj as compress doesn't let us specify wbits
+            # needed to get the raw stream without headers
+            co = zlib.compressobj(wbits=-zlib.MAX_WBITS)
+            return co.compress(s) + co.flush()
+        elif self._version == 2 and self._compression == 'none':
+            # nothing to do, just return original data
+            return s
+        elif self._version == 1:
             co = zlib.compressobj(wbits=-zlib.MAX_WBITS)
             b = co.compress(s) + co.flush()
             return b64encode(''.join(map(chr, b)).encode('utf-8'))
+        else:
+            raise PBinCLIException('Unknown compression type provided!')
 
 
     def decrypt(self):
