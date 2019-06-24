@@ -141,7 +141,7 @@ class Paste:
             # nothing to do, just return original data
             return s
         elif self._version == 1:
-            return zlib.decompress(bytearray(map(ord, b64decode(s.encode('utf-8')).decode('utf-8'))), -zlib.MAX_WBITS)
+            return zlib.decompress(bytearray(map(lambda c:ord(c)&255, b64decode(s.encode('utf-8')).decode('utf-8'))), -zlib.MAX_WBITS)
         else:
             raise PBinCLIException('Unknown compression type provided in paste!')
 
@@ -182,6 +182,7 @@ class Paste:
             cipher_message = json_decode(self.__decompress(cipher.decrypt_and_verify(cipher_text, cipher_tag)).decode())
 
             self._text = cipher_message['paste'].encode()
+
             if 'attachment' in cipher_message and 'attachment_name' in cipher_message:
                 self._attachment = cipher_message['attachment']
                 self._attachment_name = cipher_message['attachment_name']
@@ -197,6 +198,7 @@ class Paste:
             text = SJCL().decrypt(cipher_text, password)
 
             if len(text):
+                if self._debug: print("Decoded Text:\t{}\n".format(text))
                 self._text = self.__decompress(text.decode())
 
             if 'attachment' in self._data and 'attachmentname' in self._data:
