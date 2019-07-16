@@ -1,17 +1,24 @@
 import requests
 
 class PrivateBin:
-    def __init__(self, server, proxy=None):
+    def __init__(self, server, settings=None):
         self.server = server
         self.headers = {'X-Requested-With': 'JSONHttpRequest'}
-        if proxy:
-            self.proxy = {proxy.split('://')[0]: proxy}
+
+        if settings['proxy']:
+            self.proxy = {settings['proxy'].split('://')[0]: settings['proxy']}
         else:
             self.proxy = {}
 
+        if settings['noinsecurewarn']:
+            from requests.packages.urllib3.exceptions import InsecureRequestWarning
+            requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+        self.session = requests.Session()
+        self.session.verify = settings['nocheckcert']
 
     def post(self, request):
-        result = requests.post(
+        result = self.session.post(
             url = self.server,
             headers = self.headers,
             proxies = self.proxy,
@@ -25,7 +32,7 @@ class PrivateBin:
 
 
     def get(self, request):
-        return requests.get(
+        return self.session.get(
             url = self.server + "?" + request,
             headers = self.headers,
             proxies = self.proxy).json()
@@ -35,7 +42,7 @@ class PrivateBin:
         # using try as workaround for versions < 1.3 due to we cant detect
         # if server used version 1.2, where auto-deletion is added
         try:
-            result = requests.post(
+            result = self.session.post(
                 url = self.server,
                 headers = self.headers,
                 proxies = self.proxy,
@@ -57,7 +64,7 @@ class PrivateBin:
 
 
     def getVersion(self):
-        jsonldSchema = requests.get(
+        jsonldSchema = self.session.get(
             url = self.server + '?jsonld=paste',
             proxies = self.proxy).json()
         return jsonldSchema['@context']['v']['@value'] \
