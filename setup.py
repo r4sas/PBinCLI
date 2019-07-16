@@ -14,6 +14,7 @@ setup(
     version=pbincli_version,
     description='PrivateBin client for command line',
     long_description=long_description,
+    long_description_content_type='text/x-rst',
     author='R4SAS',
     author_email='r4sas@i2pmail.org',
     url='https://github.com/r4sas/PBinCLI',
