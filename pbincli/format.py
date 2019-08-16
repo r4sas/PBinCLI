@@ -234,8 +234,8 @@ class Paste:
                     self._compression
                 ],
                 formatter,
-                int(burnafterreading),
-                int(discussion)
+                int(discussion),
+                int(burnafterreading)
             ]
             cipher_message = {'paste':self._text}
             if self._attachment:
