@@ -23,3 +23,9 @@ def check_writable(f):
 
 def json_encode(s):
     return json.dumps(s, separators=(',',':')).encode()
+
+
+def validate_url(s):
+    if not s.endswith('/'):
+        s = s + "/"
+    return s

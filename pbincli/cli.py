@@ -3,7 +3,7 @@ import os, sys, argparse
 
 import pbincli.actions
 from pbincli.api import PrivateBin
-from pbincli.utils import PBinCLIException
+from pbincli.utils import PBinCLIException, validate_url
 
 CONFIG_PATHS = [os.path.join(".", "pbincli.conf", ),
        os.path.join(os.getenv("HOME") or "~", ".config", "pbincli", "pbincli.conf") ]
@@ -78,13 +78,15 @@ def main():
         var = "PRIVATEBIN_{}".format(key.upper())
         if var in os.environ: CONFIG[key] = os.getenv(var)
 
+    PBIN_URL = validate_url(CONFIG["server"])
+
     SETTINGS = {
         "proxy": CONFIG["proxy"],
         "nocheckcert": args.no_check_certificate,
         "noinsecurewarn": args.no_insecure_warning
     }
 
-    api_client = PrivateBin(CONFIG["server"], settings=SETTINGS)
+    api_client = PrivateBin(PBIN_URL, settings=SETTINGS)
 
     if hasattr(args, "func"):
         try:
