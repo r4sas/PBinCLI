@@ -1,4 +1,5 @@
 from pbincli.format import Paste
+from pbincli.utils import PBinCLIError
 
 def send(args, api_client):
     if not args.notext:
@@ -7,8 +8,7 @@ def send(args, api_client):
         elif args.stdin:
             text = args.stdin.read()
     elif not args.file:
-        print("Nothing to send!")
-        exit(1)
+        PBinCLIError("Nothing to send!")
     else:
         text = ""
 
@@ -64,11 +64,9 @@ def send(args, api_client):
             result['id'],
             passphrase))
     elif result['status']: # return code is other then zero
-        print("Something went wrong...\nError:\t\t{}".format(result['message']))
-        exit(1)
+        PBinCLIError("Something went wrong...\nError:\t\t{}".format(result['message']))
     else: # or here no status field in response or it is empty
-        print("Something went wrong...\nError: Empty response.")
-        exit(1)
+        PBinCLIError("Something went wrong...\nError: Empty response.")
 
 
 def get(args, api_client):
@@ -77,12 +75,10 @@ def get(args, api_client):
     try:
         pasteid, passphrase = args.pasteinfo.split("#")
     except ValueError:
-        print("PBinCLI error: provided info hasn't contain valid PasteID#Passphrase string")
-        exit(1)
+        PBinCLIError("Provided info hasn't contain valid PasteID#Passphrase string")
 
     if not (pasteid and passphrase):
-        print("PBinCLI error: Incorrect request")
-        exit(1)
+        PBinCLIError("Incorrect request")
 
     if args.debug: print("PasteID:\t{}\nPassphrase:\t{}".format(pasteid, passphrase))
 
@@ -139,11 +135,9 @@ def get(args, api_client):
             api_client.delete(json_encode({'pasteid':pasteid,'deletetoken':'burnafterreading'}))
 
     elif result['status']: # return code is other then zero
-        print("Something went wrong...\nError:\t\t{}".format(result['message']))
-        exit(1)
+        PBinCLIError("Something went wrong...\nError:\t\t{}".format(result['message']))
     else: # or here no status field in response or it is empty
-        print("Something went wrong...\nError: Empty response.")
-        exit(1)
+        PBinCLIError("Something went wrong...\nError: Empty response.")
 
 
 def delete(args, api_client):

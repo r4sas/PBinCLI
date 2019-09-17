@@ -39,7 +39,7 @@ def main():
     # URL shortener
     send_parser.add_argument("-s", "--shorten", default=False, action="store_true", help="use URL shortener")
     send_parser.add_argument("--shorten-api", default="yourls", action="store",
-        choices=["yourls"], help="select API used for selected URL shortener service")
+        choices=["clckru", "yourls"], help="API used by shortener service (default: YOURLS)")
     send_parser.add_argument("--shorten-url", help="URL of shortener service API")
     send_parser.add_argument("--shorten-user", help="Shortener username")
     send_parser.add_argument("--shorten-pass", help="Shortener password")
@@ -89,7 +89,7 @@ def main():
         if var in os.environ: CONFIG[key] = os.getenv(var)
 
     SETTINGS = {
-        "server" : validate_url(CONFIG["server"])
+        "server" : validate_url(CONFIG["server"]),
         "proxy": CONFIG["proxy"],
         "nocheckcert": args.no_check_certificate,
         "noinsecurewarn": args.no_insecure_warning
@@ -101,8 +101,7 @@ def main():
         try:
             args.func(args, api_client)
         except PBinCLIException as pe:
-            print("PBinCLI error: {}".format(pe))
-            sys.exit(1)
+            raise PBinCLIException("error: {}".format(pe))
     else:
         parser.print_help()
 

@@ -1,7 +1,12 @@
-import json, ntpath, os
+import json, ntpath, os, sys
 
 class PBinCLIException(Exception):
     pass
+
+
+def PBinCLIError(message):
+    print("PBinCLI Error: {}".format(message), file=sys.stderr)
+    exit(1)
 
 
 def path_leaf(path):
@@ -12,13 +17,13 @@ def path_leaf(path):
 def check_readable(f):
     # Checks if path exists and readable
     if not os.path.exists(f) or not os.access(f, os.R_OK):
-        raise PBinCLIException("Error accessing path: {}".format(f))
+        PBinCLIError("Error accessing path: {}".format(f))
 
 
 def check_writable(f):
     # Checks if path is writable
     if not os.access(os.path.dirname(f) or ".", os.W_OK):
-        raise PBinCLIException("Path is not writable: {}".format(f))
+        PBinCLIError("Path is not writable: {}".format(f))
 
 
 def json_encode(s):

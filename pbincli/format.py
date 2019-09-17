@@ -1,7 +1,7 @@
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
-from pbincli.utils import PBinCLIException
+from pbincli.utils import PBinCLIError
 import zlib
 
 CIPHER_ITERATION_COUNT = 100000
@@ -143,7 +143,7 @@ class Paste:
         elif self._version == 1:
             return zlib.decompress(bytearray(map(lambda c:ord(c)&255, b64decode(s.encode('utf-8')).decode('utf-8'))), -zlib.MAX_WBITS)
         else:
-            raise PBinCLIException('Unknown compression type provided in paste!')
+            PBinCLIError('Unknown compression type provided in paste!')
 
 
     def __compress(self, s):
@@ -160,7 +160,7 @@ class Paste:
             b = co.compress(s) + co.flush()
             return b64encode(''.join(map(chr, b)).encode('utf-8'))
         else:
-            raise PBinCLIException('Unknown compression type provided!')
+            PBinCLIError('Unknown compression type provided!')
 
 
     def decrypt(self):
