@@ -107,9 +107,8 @@ class Shortener:
 
     def getlink(self, url):
         if self.api == 'yourls':
-            data_format = 'json'
-            args = {'action': 'shorturl', 'format': data_format, 'url': url}
-            reqest = dict(args.items() + self.auth_args.items())
+            request = {'action': 'shorturl', 'format': 'json', 'url': url}
+            request.update(self.auth_args)
 
             result = self.session.post(
                 url = self.apiurl,
