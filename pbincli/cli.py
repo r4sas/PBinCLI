@@ -37,15 +37,16 @@ def main():
     send_parser.add_argument("-c", "--compression", default="zlib", action="store",
         choices=["zlib", "none"], help="set compression for paste (default: zlib). Note: works only on v2 paste format")
     # URL shortener
-    send_parser.add_argument("-s", "--shorten", default=False, action="store_true", help="use URL shortener")
-    send_parser.add_argument("--shorten-api", default="yourls", action="store",
-        choices=["clckru", "yourls"], help="API used by shortener service (default: YOURLS)")
-    send_parser.add_argument("--shorten-url", help="URL of shortener service API")
-    send_parser.add_argument("--shorten-user", help="Shortener username")
-    send_parser.add_argument("--shorten-pass", help="Shortener password")
-    send_parser.add_argument("--shorten-token", help="Shortener token")
-    # Certificates check bypass
-    send_parser.add_argument("--no-check-certificate", default=True, action="store_false", help="disable certificate validation")
+    send_parser.add_argument("-S", "--short", default=False, action="store_true", help="use URL shortener")
+    send_parser.add_argument("--short-api", default=argparse.SUPPRESS, action="store", choices=["clckru", "yourls"], help="API used by shortener service")
+    send_parser.add_argument("--short-url", default=argparse.SUPPRESS, help="URL of shortener service API")
+    send_parser.add_argument("--short-user", default=argparse.SUPPRESS, help="Shortener username")
+    send_parser.add_argument("--short-pass", default=argparse.SUPPRESS, help="Shortener password")
+    send_parser.add_argument("--short-token", default=argparse.SUPPRESS, help="Shortener token")
+    # Connection options
+    send_parser.add_argument("-s", "--server", default=argparse.SUPPRESS, help="PrivateBin service URL (default: https://paste.i2pd.xyz/)")
+    send_parser.add_argument("-x", "--proxy", default=argparse.SUPPRESS, help="Proxy server address (default: None)")
+    send_parser.add_argument("--no-check-certificate", default=False, action="store_true", help="disable certificate validation")
     send_parser.add_argument("--no-insecure-warning", default=False, action="store_true", help="suppress InsecureRequestWarning (only with --no-check-certificate)")
     #
     send_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
@@ -57,7 +58,7 @@ def main():
     get_parser = subparsers.add_parser("get", description="Get data from PrivateBin instance")
     get_parser.add_argument("pasteinfo", help="example: aabb#cccddd")
     get_parser.add_argument("-p", "--password", help="password for decrypting paste")
-    get_parser.add_argument("--no-check-certificate", default=True, action="store_false", help="disable certificate validation")
+    get_parser.add_argument("--no-check-certificate", default=False, action="store_true", help="disable certificate validation")
     get_parser.add_argument("--no-insecure-warning", default=False, action="store_true", help="suppress InsecureRequestWarning (only with --no-check-certificate)")
     get_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
     get_parser.set_defaults(func=pbincli.actions.get)
@@ -66,7 +67,7 @@ def main():
     delete_parser = subparsers.add_parser("delete", description="Delete paste from PrivateBin instance using token")
     delete_parser.add_argument("-p", "--paste", required=True, help="paste id")
     delete_parser.add_argument("-t", "--token", required=True, help="paste deletion token")
-    delete_parser.add_argument("--no-check-certificate", default=True, action="store_false", help="disable certificate validation")
+    delete_parser.add_argument("--no-check-certificate", default=False, action="store_true", help="disable certificate validation")
     delete_parser.add_argument("--no-insecure-warning", default=False, action="store_true", help="suppress InsecureRequestWarning (only with --no-check-certificate)")
     delete_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
     delete_parser.set_defaults(func=pbincli.actions.delete)
@@ -75,9 +76,23 @@ def main():
     args = parser.parse_args()
 
     CONFIG = {
-        "server": "https://paste.i2pd.xyz/",
-        "proxy": None
+        'server': 'https://paste.i2pd.xyz/',
+        'proxy': None,
+        'short_api': None,
+        'short_url': None,
+        'short_user': None,
+        'short_pass': None,
+        'short_token': None,
+        'no_check_certificate': False,
+        'no_insecure_warning': False
     }
+
+    """Configuration preference order:
+    1. Command line switches
+    2. Environment variables
+    3. Configuration file
+    4. Default values below
+    """
 
     for p in CONFIG_PATHS:
         if os.path.exists(p):
@@ -87,19 +102,19 @@ def main():
     for key in CONFIG.keys():
         var = "PRIVATEBIN_{}".format(key.upper())
         if var in os.environ: CONFIG[key] = os.getenv(var)
+        # values from command line switches are preferred
+        args_var = vars(args)
+        if key in args_var:
+            CONFIG[key] = args_var[key]
 
-    SETTINGS = {
-        "server" : validate_url(CONFIG["server"]),
-        "proxy": CONFIG["proxy"],
-        "nocheckcert": args.no_check_certificate,
-        "noinsecurewarn": args.no_insecure_warning
-    }
+    # Re-validate PrivateBin instance URL
+    CONFIG['server'] = validate_url(CONFIG['server'])
 
-    api_client = PrivateBin(SETTINGS)
+    api_client = PrivateBin(CONFIG)
 
     if hasattr(args, "func"):
         try:
-            args.func(args, api_client)
+            args.func(args, api_client, settings=CONFIG)
         except PBinCLIException as pe:
             raise PBinCLIException("error: {}".format(pe))
     else:

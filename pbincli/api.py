@@ -11,12 +11,12 @@ class PrivateBin:
         else:
             self.proxy = {}
 
-        if settings['noinsecurewarn']:
+        if settings['no_insecure_warning']:
             from requests.packages.urllib3.exceptions import InsecureRequestWarning
             requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
         self.session = requests.Session()
-        self.session.verify = settings['nocheckcert']
+        self.session.verify = not settings['no_check_certificate']
 
     def post(self, request):
         result = self.session.post(
@@ -75,61 +75,64 @@ class Shortener:
     """Some parts of this class was taken from
     python-yourls (https://github.com/tflink/python-yourls/) library
     """
-    def __init__(self, apiurl, username=None, password=None, token=None, settings=None):
+    def __init__(self, settings=None):
+        self.api = settings['short_api']
+
         # we checking which service is used, because some services doesn't require
         # any authentication, or have only one domain on which it working
-        if settings['api'] == 'yourls':
-            if not apiurl:
+        if self.api == 'yourls':
+            if not settings['short_url']:
                 PBinCLIError("YOURLS: An API URL is required")
-            self.apiurl = apiurl
+            self.apiurl = settings['short_url']
 
-            if not username or not password:
-                if not self.token:
+            if not settings['short_user'] or not settings['short_pass']:
+                if not settings['short_token']:
                     PBinCLIError("YOURLS: username and password or token are required")
                 else:
-                    self.auth_args = {'signature': token}
+                    self.auth_args = {'signature': settings['short_token']}
             else:
-                self.auth_args = {'username': self.username, 'password': self.password}
+                self.auth_args = {'username': settings['short_user'], 'password': settings['short_pass']}
 
         if settings['proxy']:
             self.proxy = {settings['proxy'].split('://')[0]: settings['proxy']}
         else:
             self.proxy = {}
 
-        if settings['noinsecurewarn']:
+        if settings['no_insecure_warning']:
             from requests.packages.urllib3.exceptions import InsecureRequestWarning
             requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
         self.session = requests.Session()
-        self.session.verify = settings['nocheckcert']
+        self.session.verify = not settings['no_check_certificate']
 
-    def yourls(self, url):
-        data_format = 'json'
-        args = {'action': 'shorturl', 'format': data_format, 'url': url}
-        reqest = dict(args.items() + self.auth_args.items())
+    def getlink(self, url):
+        if self.api == 'yourls':
+            data_format = 'json'
+            args = {'action': 'shorturl', 'format': data_format, 'url': url}
+            reqest = dict(args.items() + self.auth_args.items())
 
-        result = self.session.post(
-            url = self.apiurl,
-            proxies = self.proxy,
-            data = request)
+            result = self.session.post(
+                url = self.apiurl,
+                proxies = self.proxy,
+                data = request)
 
-        try:
-            result.json()
-            if result['status'] == 'fail' and result['code'] == 'error:keyword':
-                PBinCLIError("YOURLS: Received error from API: {}".format(result['message']))
-            if not 'shorturl' in result:
-                PBinCLIError("YOURLS: Unknown error: {}".format(result['message']))
+            try:
+                result.json()
+                if result['status'] == 'fail' and result['code'] == 'error:keyword':
+                    PBinCLIError("YOURLS: Received error from API: {}".format(result['message']))
+                if not 'shorturl' in result:
+                    PBinCLIError("YOURLS: Unknown error: {}".format(result['message']))
 
-            print("Paste short URL: {}".format(result['shorturl']))
-        except ValueError:
-            PBinCLIError("YOURLS: Unable parse response. Received (size = {}):\n{}".format(len(result.text), result.text))
+                print("Short Link:\t{}".format(result['shorturl']))
+            except ValueError:
+                PBinCLIError("YOURLS: Unable parse response. Received (size = {}):\n{}".format(len(result.text), result.text))
 
-    def clck(self, url):
-        # from urllib.parse import quote_plus
-        request = {'url': url}
+        elif self.api == 'clckru':
+            # from urllib.parse import quote_plus
+            request = {'url': url}
 
-        result = self.session.post(
-            url = "https://clck.ru/--",
-            proxies = self.proxy,
-            data = request)
-        print("Paste short URL: {}".format(result))
+            result = self.session.post(
+                url = "https://clck.ru/--",
+                proxies = self.proxy,
+                data = request)
+            print("Short Link:\t{}".format(result.text))

@@ -1,7 +1,11 @@
 from pbincli.format import Paste
 from pbincli.utils import PBinCLIError
 
-def send(args, api_client):
+def send(args, api_client, settings=None):
+    from pbincli.api import Shortener
+    if args.short:
+        shortener = Shortener(settings)
+
     if not args.notext:
         if args.text:
             text = args.text
@@ -60,7 +64,7 @@ def send(args, api_client):
             result['id'],
             passphrase,
             result['deletetoken'],
-            api_client.server,
+            settings['server'],
             result['id'],
             passphrase))
     elif result['status']: # return code is other then zero
@@ -68,8 +72,14 @@ def send(args, api_client):
     else: # or here no status field in response or it is empty
         PBinCLIError("Something went wrong...\nError: Empty response.")
 
+    if args.short:
+        shortener.getlink("{}?{}#{}".format(
+            settings['server'],
+            result['id'],
+            passphrase))
 
-def get(args, api_client):
+
+def get(args, api_client, settings=None):
     from pbincli.utils import check_writable, json_encode
 
     try:
@@ -140,7 +150,7 @@ def get(args, api_client):
         PBinCLIError("Something went wrong...\nError: Empty response.")
 
 
-def delete(args, api_client):
+def delete(args, api_client, settings=None):
     from pbincli.utils import json_encode
 
     pasteid = args.paste
