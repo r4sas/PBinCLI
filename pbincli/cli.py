@@ -2,7 +2,7 @@
 import os, sys, argparse
 
 import pbincli.actions
-from pbincli.api import PrivateBin
+from pbincli.api import PrivateBin, Shortener
 from pbincli.utils import PBinCLIException, validate_url
 
 CONFIG_PATHS = [os.path.join(".", "pbincli.conf", ),
@@ -36,8 +36,18 @@ def main():
     send_parser.add_argument("-q", "--notext", default=False, action="store_true", help="don't send text in paste")
     send_parser.add_argument("-c", "--compression", default="zlib", action="store",
         choices=["zlib", "none"], help="set compression for paste (default: zlib). Note: works only on v2 paste format")
+    # URL shortener
+    send_parser.add_argument("-s", "--shorten", default=False, action="store_true", help="use URL shortener")
+    send_parser.add_argument("--shorten-api", default="yourls", action="store",
+        choices=["yourls"], help="select API used for selected URL shortener service")
+    send_parser.add_argument("--shorten-url", help="URL of shortener service API")
+    send_parser.add_argument("--shorten-user", help="Shortener username")
+    send_parser.add_argument("--shorten-pass", help="Shortener password")
+    send_parser.add_argument("--shorten-token", help="Shortener token")
+    # Certificates check bypass
     send_parser.add_argument("--no-check-certificate", default=True, action="store_false", help="disable certificate validation")
     send_parser.add_argument("--no-insecure-warning", default=False, action="store_true", help="suppress InsecureRequestWarning (only with --no-check-certificate)")
+    #
     send_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
     send_parser.add_argument("--dry", default=False, action="store_true", help="invoke dry run")
     send_parser.add_argument("stdin", help="input paste text from stdin", nargs="?", type=argparse.FileType("r"), default=sys.stdin)
@@ -78,15 +88,14 @@ def main():
         var = "PRIVATEBIN_{}".format(key.upper())
         if var in os.environ: CONFIG[key] = os.getenv(var)
 
-    PBIN_URL = validate_url(CONFIG["server"])
-
     SETTINGS = {
+        "server" : validate_url(CONFIG["server"])
         "proxy": CONFIG["proxy"],
         "nocheckcert": args.no_check_certificate,
         "noinsecurewarn": args.no_insecure_warning
     }
 
-    api_client = PrivateBin(PBIN_URL, settings=SETTINGS)
+    api_client = PrivateBin(SETTINGS)
 
     if hasattr(args, "func"):
         try:

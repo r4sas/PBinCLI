@@ -1,8 +1,8 @@
 import requests
 
 class PrivateBin:
-    def __init__(self, server, settings=None):
-        self.server = server
+    def __init__(self, settings=None):
+        self.server = settings['server']
         self.headers = {'X-Requested-With': 'JSONHttpRequest'}
 
         if settings['proxy']:
@@ -72,3 +72,21 @@ class PrivateBin:
                 'v' in jsonldSchema['@context'] and
                 '@value' in jsonldSchema['@context']['v']) \
             else 1
+
+class Shortener:
+    def __init__(self, settings=None):
+        self.server = settings['server']
+        self.headers = {'X-Requested-With': 'JSONHttpRequest'}
+
+        if settings['proxy']:
+            self.proxy = {settings['proxy'].split('://')[0]: settings['proxy']}
+        else:
+            self.proxy = {}
+
+        if settings['noinsecurewarn']:
+            from requests.packages.urllib3.exceptions import InsecureRequestWarning
+            requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+        self.session = requests.Session()
+        self.session.verify = settings['nocheckcert']
+
