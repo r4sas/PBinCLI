@@ -136,11 +136,17 @@ class Shortener:
                     PBinCLIError("YOURLS: No status, statusCode or message fields in response! Received:\n{}".format(response))
 
         elif self.api == 'clckru':
-            # from urllib.parse import quote_plus
             request = {'url': url}
-
             result = self.session.post(
                 url = "https://clck.ru/--",
+                proxies = self.proxy,
+                data = request)
+            print("Short Link:\t{}".format(result.text))
+
+        elif self.api == 'tinyurl':
+            request = {'url': url}
+            result = self.session.post(
+                url = "https://tinyurl.com/api-create.php",
                 proxies = self.proxy,
                 data = request)
             print("Short Link:\t{}".format(result.text))
