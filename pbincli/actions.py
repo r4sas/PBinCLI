@@ -73,6 +73,7 @@ def send(args, api_client, settings=None):
         PBinCLIError("Something went wrong...\nError: Empty response.")
 
     if args.short:
+        print("\nQuerying URL shortening service...")
         shortener.getlink("{}?{}#{}".format(
             settings['server'],
             result['id'],

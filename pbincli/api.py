@@ -125,7 +125,7 @@ class Shortener:
             else:
                 response = result.json()
 
-                if {'status', 'code', 'message'} <= set(response.keys()):
+                if {'status', 'statusCode', 'message'} <= set(response.keys()):
                     if response['status'] == 'fail':
                         PBinCLIError("YOURLS: Received error from API: {}".format(response['message']))
                     if not 'shorturl' in response:
@@ -133,7 +133,7 @@ class Shortener:
                     else:
                         print("Short Link:\t{}".format(response['shorturl']))
                 else:
-                    PBinCLIError("YOURLS: No status, code and message fields in response! Received:\n{}".format(response))
+                    PBinCLIError("YOURLS: No status, statusCode or message fields in response! Received:\n{}".format(response))
 
         elif self.api == 'clckru':
             # from urllib.parse import quote_plus
