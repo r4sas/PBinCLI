@@ -116,13 +116,13 @@ class Shortener:
                 data = request)
 
             try:
-                result.json()
-                if result['status'] == 'fail' and result['code'] == 'error:keyword':
-                    PBinCLIError("YOURLS: Received error from API: {}".format(result['message']))
-                if not 'shorturl' in result:
-                    PBinCLIError("YOURLS: Unknown error: {}".format(result['message']))
+                response = result.json()
+                if response['status'] == 'fail' and response['code'] == 'error:keyword':
+                    PBinCLIError("YOURLS: Received error from API: {}".format(response['message']))
+                if not 'shorturl' in response:
+                    PBinCLIError("YOURLS: Unknown error: {}".format(response['message']))
 
-                print("Short Link:\t{}".format(result['shorturl']))
+                print("Short Link:\t{}".format(response['shorturl']))
             except ValueError:
                 PBinCLIError("YOURLS: Unable parse response. Received (size = {}):\n{}".format(len(result.text), result.text))
 
