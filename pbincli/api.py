@@ -100,6 +100,14 @@ class Shortener:
                 self.auth_args = {}
             else:
                 PBinCLIError("YOURLS: either username and password or token are required. Otherwise set to default (None)")
+        elif self.api == 'isgd' or self.api == 'vgd':
+            if self.api == 'isgd':
+                self.apiurl = 'https://is.gd/'
+            else:
+                self.apiurl = 'https://v.gd/'
+
+            self.useragent = 'Mozilla/5.0 (compatible; pbincli - https://github.com/r4sas/pbincli/)'
+
 
         self.session, self.proxy = _config_requests(settings)
 
@@ -137,16 +145,99 @@ class Shortener:
 
         elif self.api == 'clckru':
             request = {'url': url}
-            result = self.session.post(
-                url = "https://clck.ru/--",
-                proxies = self.proxy,
-                data = request)
-            print("Short Link:\t{}".format(result.text))
+
+            try:
+                result = self.session.post(
+                    url = "https://clck.ru/--",
+                    proxies = self.proxy,
+                    data = request)
+                print("Short Link:\t{}".format(result.text))
+            except Exception as ex:
+                PBinCLIError("clck.ru: unexcepted behavior: {}".format(ex))
 
         elif self.api == 'tinyurl':
             request = {'url': url}
-            result = self.session.post(
-                url = "https://tinyurl.com/api-create.php",
-                proxies = self.proxy,
-                data = request)
-            print("Short Link:\t{}".format(result.text))
+
+            try:
+                result = self.session.post(
+                    url = "https://tinyurl.com/api-create.php",
+                    proxies = self.proxy,
+                    data = request)
+                print("Short Link:\t{}".format(result.text))
+            except Exception as ex:
+                PBinCLIError("TinyURL: unexcepted behavior: {}".format(ex))
+
+        elif self.api == 'isgd' or self.api == 'vgd':
+            request = {
+                'format': 'json',
+                'url': url,
+                'logstats': 0 # we don't want use any statistics
+            }
+            headers = { 'User-Agent': self.useragent}
+
+            try:
+                result = self.session.post(
+                    url = self.apiurl + "create.php",
+                    headers = headers,
+                    proxies = self.proxy,
+                    data = request)
+
+                response = result.json()
+
+                if 'shorturl' in response:
+                    print("Short Link:\t{}".format(response['shorturl']))
+                else:
+                    PBinCLIError("{}: got error {} from API: {}".format(
+                        "is.gd" if self.api == 'isgd' else 'v.gd',
+                        response['errorcode'],
+                        response['errormessage']))
+
+            except Exception as ex:
+                PBinCLIError("{}: unexcepted behavior: {}".format(
+                    "is.gd" if self.api == 'isgd' else 'v.gd',
+                     ex))
+
+        elif self.api == 'cuttly':
+            request = {
+                'url': url,
+                'domain': 0
+            }
+
+            try:
+                result = self.session.post(
+                    url = "https://cutt.ly/scripts/shortenUrl.php",
+                    proxies = self.proxy,
+                    data = request)
+                print("Short Link:\t{}".format(result.text))
+            except Exception as ex:
+                PBinCLIError("cutt.ly: unexcepted behavior: {}".format(ex))
+
+        '''
+        # That code needs testing. API requires username and apiKey or accessToken to work.
+        elif self.api == 'bitly':
+            request = {'url': url}
+            headers = {'X-Requested-With': 'XMLHttpRequest'}
+
+            try:
+                result = self.session.post(
+                    url = "https://bitly.com/",
+                    headers = headers,
+                    proxies = self.proxy,
+                    data = request)
+                response = result.json()
+                if response['data'] and response['status_code'] == 200:
+                    print("Short Link:\t{}".format(response['data']['anon_shorten']['link']))
+                elif response['status_txt']:
+                    errcode = response['status_txt'] or 'DEFAULT'
+                    friendlyError = {
+                        'RATE_LIMIT_EXCEEDED': 'Whoa - you\'ve exceeded your quota. Create a free account to keep shortening.',
+                        'INVALID_ARG_URL': 'Unable to shorten that link. It is not a valid url.',
+                        'INVALID_ARG_LONGURL': 'Unable to shorten that link. It is not a valid url.',
+                        'ALREADY_A_BITLY_LINK': 'That is already a Bitly link',
+                        'UNKNOWN_ERROR': 'Woops. Something went wrong. Please try again.',
+                        'DEFAULT': 'An error occurred'
+                    }
+                    PBinCLIError("bitly: got error from API: {}".format(friendlyError[errcode]))
+            except Exception as ex:
+                PBinCLIError("bitly: unexcepted behavior: {}".format(ex))
+        '''
