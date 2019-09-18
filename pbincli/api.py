@@ -119,10 +119,10 @@ class Shortener:
 
             try:
                 result.raise_for_status()
-            except HTTPError as http_exc:
+            except HTTPError:
                 try:
                     response = result.json()
-                except:
+                except ValueError:
                     PBinCLIError("YOURLS: Unable parse response. Received (size = {}):\n{}".format(len(result.text), result.text))
                 else:
                     PBinCLIError("YOURLS: Received error from API: {} with JSON {}".format(result, response))
@@ -130,11 +130,7 @@ class Shortener:
                 response = result.json()
 
                 if {'status', 'code', 'message'} <= set(response.keys()):
-                    status = response['status']
-                    code = response['code']
-                    message = response['message']
-
-                    if status == 'fail':
+                    if response['status'] == 'fail':
                         PBinCLIError("YOURLS: Received error from API: {}".format(response['message']))
                     if not 'shorturl' in response:
                         PBinCLIError("YOURLS: Unknown error: {}".format(response['message']))
