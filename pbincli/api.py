@@ -2,22 +2,28 @@ import requests
 from requests import HTTPError
 from pbincli.utils import PBinCLIError
 
+def _config_requests(settings=None):
+    if settings['proxy']:
+        proxy = {settings['proxy'].split('://')[0]: settings['proxy']}
+    else:
+        proxy = {}
+
+    if settings['no_insecure_warning']:
+        from requests.packages.urllib3.exceptions import InsecureRequestWarning
+        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+    session = requests.Session()
+    session.verify = not settings['no_check_certificate']
+
+    return session, proxy
+
+
 class PrivateBin:
     def __init__(self, settings=None):
         self.server = settings['server']
         self.headers = {'X-Requested-With': 'JSONHttpRequest'}
 
-        if settings['proxy']:
-            self.proxy = {settings['proxy'].split('://')[0]: settings['proxy']}
-        else:
-            self.proxy = {}
-
-        if settings['no_insecure_warning']:
-            from requests.packages.urllib3.exceptions import InsecureRequestWarning
-            requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-
-        self.session = requests.Session()
-        self.session.verify = not settings['no_check_certificate']
+        self.session, self.proxy = _config_requests(settings)
 
     def post(self, request):
         result = self.session.post(
@@ -95,17 +101,7 @@ class Shortener:
             else:
                 PBinCLIError("YOURLS: either username and password or token are required. Otherwise set to default (None)")
 
-        if settings['proxy']:
-            self.proxy = {settings['proxy'].split('://')[0]: settings['proxy']}
-        else:
-            self.proxy = {}
-
-        if settings['no_insecure_warning']:
-            from requests.packages.urllib3.exceptions import InsecureRequestWarning
-            requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-
-        self.session = requests.Session()
-        self.session.verify = not settings['no_check_certificate']
+        self.session, self.proxy = _config_requests(settings)
 
     def getlink(self, url):
         if self.api == 'yourls':
