@@ -1,4 +1,5 @@
 import requests
+from requests import HTTPError
 from pbincli.utils import PBinCLIError
 
 class PrivateBin:
@@ -85,13 +86,14 @@ class Shortener:
                 PBinCLIError("YOURLS: An API URL is required")
             self.apiurl = settings['short_url']
 
-            if not settings['short_user'] or not settings['short_pass']:
-                if not settings['short_token']:
-                    PBinCLIError("YOURLS: username and password or token are required")
-                else:
-                    self.auth_args = {'signature': settings['short_token']}
-            else:
+            if settings['short_user'] and settings['short_pass'] and settings['short_token'] is None:
                 self.auth_args = {'username': settings['short_user'], 'password': settings['short_pass']}
+            elif settings['short_user'] is None and settings['short_pass'] is None and settings['short_token']:
+                self.auth_args = {'signature': settings['short_token']}
+            elif settings['short_user'] is None and settings['short_pass'] is None and settings['short_token'] is None:
+                self.auth_args = {}
+            else:
+                PBinCLIError("YOURLS: either username and password or token are required. Otherwise set to default (None)")
 
         if settings['proxy']:
             self.proxy = {settings['proxy'].split('://')[0]: settings['proxy']}
@@ -116,15 +118,30 @@ class Shortener:
                 data = request)
 
             try:
+                result.raise_for_status()
+            except HTTPError as http_exc:
+                try:
+                    response = result.json()
+                except:
+                    PBinCLIError("YOURLS: Unable parse response. Received (size = {}):\n{}".format(len(result.text), result.text))
+                else:
+                    PBinCLIError("YOURLS: Received error from API: {} with JSON {}".format(result, response))
+            else:
                 response = result.json()
-                if response['status'] == 'fail' and response['code'] == 'error:keyword':
-                    PBinCLIError("YOURLS: Received error from API: {}".format(response['message']))
-                if not 'shorturl' in response:
-                    PBinCLIError("YOURLS: Unknown error: {}".format(response['message']))
 
-                print("Short Link:\t{}".format(response['shorturl']))
-            except ValueError:
-                PBinCLIError("YOURLS: Unable parse response. Received (size = {}):\n{}".format(len(result.text), result.text))
+                if {'status', 'code', 'message'} <= set(response.keys()):
+                    status = response['status']
+                    code = response['code']
+                    message = response['message']
+
+                    if status == 'fail':
+                        PBinCLIError("YOURLS: Received error from API: {}".format(response['message']))
+                    if not 'shorturl' in response:
+                        PBinCLIError("YOURLS: Unknown error: {}".format(response['message']))
+                    else:
+                        print("Short Link:\t{}".format(response['shorturl']))
+                else:
+                    PBinCLIError("YOURLS: No status, code and message fields in response! Received:\n{}".format(response))
 
         elif self.api == 'clckru':
             # from urllib.parse import quote_plus
