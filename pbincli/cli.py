@@ -2,7 +2,7 @@
 import os, sys, argparse
 
 import pbincli.actions
-from pbincli.api import PrivateBin, Shortener
+from pbincli.api import PrivateBin
 from pbincli.utils import PBinCLIException, validate_url
 
 CONFIG_PATHS = [os.path.join(".", "pbincli.conf", ),
@@ -87,12 +87,11 @@ def main():
         'no_insecure_warning': False
     }
 
-    """Configuration preference order:
-    1. Command line switches
-    2. Environment variables
-    3. Configuration file
-    4. Default values below
-    """
+    # Configuration preference order:
+    # 1. Command line switches
+    # 2. Environment variables
+    # 3. Configuration file
+    # 4. Default values below
 
     for p in CONFIG_PATHS:
         if os.path.exists(p):
