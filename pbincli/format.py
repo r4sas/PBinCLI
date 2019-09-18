@@ -164,111 +164,125 @@ class Paste:
 
 
     def decrypt(self):
+        # that is wrapper which running needed function regrading to paste version
+        self._decryptV2() if self._version == 2 else self._decryptV1()
+
+
+    def _decryptV2(self):
+        from json import loads as json_decode
+        iv = b64decode(self._data['adata'][0][0])
+        salt = b64decode(self._data['adata'][0][1])
+        key = self.__deriveKey(salt)
+
+        # Get compression type from received paste
+        self._compression = self._data['adata'][0][7]
+
+        cipher = self.__initializeCipher(key, iv, self._data['adata'])
+        # Cut the cipher text into message and tag
+        cipher_text_tag = b64decode(self._data['ct'])
+        cipher_text = cipher_text_tag[:-CIPHER_TAG_BYTES]
+        cipher_tag = cipher_text_tag[-CIPHER_TAG_BYTES:]
+        cipher_message = json_decode(self.__decompress(cipher.decrypt_and_verify(cipher_text, cipher_tag)).decode())
+
+        self._text = cipher_message['paste'].encode()
+
+        if 'attachment' in cipher_message and 'attachment_name' in cipher_message:
+            self._attachment = cipher_message['attachment']
+            self._attachment_name = cipher_message['attachment_name']
+
+
+    def _decryptV1(self):
+        from sjcl import SJCL
         from json import loads as json_decode
 
-        if self._version == 2:
-            iv = b64decode(self._data['adata'][0][0])
-            salt = b64decode(self._data['adata'][0][1])
-            key = self.__deriveKey(salt)
+        password = self.__preparePassKey()
+        cipher_text = json_decode(self._data['data'])
+        if self._debug: print("Text:\t{}\n".format(cipher_text))
 
-            # Get compression type from received paste
-            self._compression = self._data['adata'][0][7]
+        text = SJCL().decrypt(cipher_text, password)
 
-            cipher = self.__initializeCipher(key, iv, self._data['adata'])
-            # Cut the cipher text into message and tag
-            cipher_text_tag = b64decode(self._data['ct'])
-            cipher_text = cipher_text_tag[:-CIPHER_TAG_BYTES]
-            cipher_tag = cipher_text_tag[-CIPHER_TAG_BYTES:]
-            cipher_message = json_decode(self.__decompress(cipher.decrypt_and_verify(cipher_text, cipher_tag)).decode())
+        if len(text):
+            if self._debug: print("Decoded Text:\t{}\n".format(text))
+            self._text = self.__decompress(text.decode())
 
-            self._text = cipher_message['paste'].encode()
+        if 'attachment' in self._data and 'attachmentname' in self._data:
+            cipherfile = json_decode(self._data['attachment'])
+            cipherfilename = json_decode(self._data['attachmentname'])
 
-            if 'attachment' in cipher_message and 'attachment_name' in cipher_message:
-                self._attachment = cipher_message['attachment']
-                self._attachment_name = cipher_message['attachment_name']
-        else:
-            from sjcl import SJCL
+            if self._debug: print("Name:\t{}\nData:\t{}".format(cipherfilename, cipherfile))
 
-            password = self.__preparePassKey()
+            attachment = SJCL().decrypt(cipherfile, password)
+            attachmentname = SJCL().decrypt(cipherfilename, password)
 
-            cipher_text = json_decode(self._data['data'])
-
-            if self._debug: print("Text:\t{}\n".format(cipher_text))
-
-            text = SJCL().decrypt(cipher_text, password)
-
-            if len(text):
-                if self._debug: print("Decoded Text:\t{}\n".format(text))
-                self._text = self.__decompress(text.decode())
-
-            if 'attachment' in self._data and 'attachmentname' in self._data:
-                cipherfile = json_decode(self._data['attachment'])
-                cipherfilename = json_decode(self._data['attachmentname'])
-
-                if self._debug: print("Name:\t{}\nData:\t{}".format(cipherfilename, cipherfile))
-
-                attachment = SJCL().decrypt(cipherfile, password)
-                attachmentname = SJCL().decrypt(cipherfilename, password)
-
-                self._attachment = self.__decompress(attachment.decode('utf-8')).decode('utf-8')
-                self._attachment_name = self.__decompress(attachmentname.decode('utf-8')).decode('utf-8')
+            self._attachment = self.__decompress(attachment.decode('utf-8')).decode('utf-8')
+            self._attachment_name = self.__decompress(attachmentname.decode('utf-8')).decode('utf-8')
 
 
     def encrypt(self, formatter, burnafterreading, discussion, expiration):
+        # that is wrapper which running needed function regrading to paste version
+        self._formatter = formatter
+        self._burnafterreading = burnafterreading
+        self._discussion = discussion
+        self._expiration = expiration
+
+        self._encryptV2() if self._version == 2 else self._encryptV1()
+
+
+    def _encryptV2(self):
         from pbincli.utils import json_encode
-        if self._version == 2:
-            iv = get_random_bytes(CIPHER_TAG_BYTES)
-            salt = get_random_bytes(CIPHER_SALT_BYTES)
-            key = self.__deriveKey(salt)
 
-            # prepare encryption authenticated data and message
-            adata = [
-                [
-                    b64encode(iv).decode(),
-                    b64encode(salt).decode(),
-                    CIPHER_ITERATION_COUNT,
-                    CIPHER_BLOCK_BITS,
-                    CIPHER_TAG_BITS,
-                    'aes',
-                    'gcm',
-                    self._compression
-                ],
-                formatter,
-                int(discussion),
-                int(burnafterreading)
-            ]
-            cipher_message = {'paste':self._text}
-            if self._attachment:
-                cipher_message['attachment'] = self._attachment
-                cipher_message['attachment_name'] = self._attachment_name
+        iv = get_random_bytes(CIPHER_TAG_BYTES)
+        salt = get_random_bytes(CIPHER_SALT_BYTES)
+        key = self.__deriveKey(salt)
 
-            cipher = self.__initializeCipher(key, iv, adata)
-            ciphertext, tag = cipher.encrypt_and_digest(self.__compress(json_encode(cipher_message)))
+        # prepare encryption authenticated data and message
+        adata = [
+            [
+                b64encode(iv).decode(),
+                b64encode(salt).decode(),
+                CIPHER_ITERATION_COUNT,
+                CIPHER_BLOCK_BITS,
+                CIPHER_TAG_BITS,
+                'aes',
+                'gcm',
+                self._compression
+            ],
+            self._formatter,
+            int(self._discussion),
+            int(self._burnafterreading)
+        ]
+        cipher_message = {'paste':self._text}
+        if self._attachment:
+            cipher_message['attachment'] = self._attachment
+            cipher_message['attachment_name'] = self._attachment_name
 
-            self._data = {'v':2,'adata':adata,'ct':b64encode(ciphertext + tag).decode(),'meta':{'expire':expiration}}
+        cipher = self.__initializeCipher(key, iv, adata)
+        ciphertext, tag = cipher.encrypt_and_digest(self.__compress(json_encode(cipher_message)))
 
-        else:
-            from sjcl import SJCL
+        self._data = {'v':2,'adata':adata,'ct':b64encode(ciphertext + tag).decode(),'meta':{'expire':self._expiration}}
 
-            self._data = {'expire':expiration,'formatter':formatter,'burnafterreading':int(burnafterreading),'opendiscussion':int(discussion)}
 
-            password = self.__preparePassKey()
+    def _encryptV1(self):
+        from sjcl import SJCL
+        from pbincli.utils import json_encode
 
-            if self._debug: print("Password:\t{}".format(password))
+        self._data = {'expire':self._expiration,'formatter':self._formatter,'burnafterreading':int(self._burnafterreading),'opendiscussion':int(self._discussion)}
 
-            # Encrypting text
-            cipher = SJCL().encrypt(self.__compress(self._text.encode('utf-8')), password, mode='gcm')
-            for k in ['salt', 'iv', 'ct']: cipher[k] = cipher[k].decode()
+        password = self.__preparePassKey()
+        if self._debug: print("Password:\t{}".format(password))
 
-            self._data['data'] = json_encode(cipher)
+        # Encrypting text
+        cipher = SJCL().encrypt(self.__compress(self._text.encode('utf-8')), password, mode='gcm')
+        for k in ['salt', 'iv', 'ct']: cipher[k] = cipher[k].decode()
 
-            if self._attachment:
-                cipherfile = SJCL().encrypt(self.__compress(self._attachment.encode('utf-8')), password, mode='gcm')
-                for k in ['salt', 'iv', 'ct']: cipherfile[k] = cipherfile[k].decode()
+        self._data['data'] = json_encode(cipher)
 
-                cipherfilename = SJCL().encrypt(self.__compress(self._attachment_name.encode('utf-8')), password, mode='gcm')
-                for k in ['salt', 'iv', 'ct']: cipherfilename[k] = cipherfilename[k].decode()
+        if self._attachment:
+            cipherfile = SJCL().encrypt(self.__compress(self._attachment.encode('utf-8')), password, mode='gcm')
+            for k in ['salt', 'iv', 'ct']: cipherfile[k] = cipherfile[k].decode()
 
-                self._data['attachment'] = json_encode(cipherfile)
-                self._data['attachmentname'] = json_encode(cipherfilename)
+            cipherfilename = SJCL().encrypt(self.__compress(self._attachment_name.encode('utf-8')), password, mode='gcm')
+            for k in ['salt', 'iv', 'ct']: cipherfilename[k] = cipherfilename[k].decode()
 
+            self._data['attachment'] = json_encode(cipherfile)
+            self._data['attachmentname'] = json_encode(cipherfilename)
