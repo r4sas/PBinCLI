@@ -165,7 +165,8 @@ class Paste:
 
     def decrypt(self):
         # that is wrapper which running needed function regrading to paste version
-        self._decryptV2() if self._version == 2 else self._decryptV1()
+        if self._version == 2: self._decryptV2()
+        else:                  self._decryptV1()
 
 
     def _decryptV2(self):
@@ -225,7 +226,8 @@ class Paste:
         self._discussion = discussion
         self._expiration = expiration
 
-        self._encryptV2() if self._version == 2 else self._encryptV1()
+        if self._version == 2: self._encryptV2()
+        else:                  self._encryptV1()
 
 
     def _encryptV2(self):
