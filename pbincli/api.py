@@ -229,32 +229,3 @@ class Shortener:
             print("Short Link:\t{}".format(result.text))
         except Exception as ex:
             PBinCLIError("cutt.ly: unexcepted behavior: {}".format(ex))
-
-
-    # [WIP] That code needs testing. API requires username and apiKey or accessToken to work.
-    def _bitly(self, url):
-        request = {'url': url}
-        headers = {'X-Requested-With': 'XMLHttpRequest'}
-
-        try:
-            result = self.session.post(
-                url = "https://bitly.com/",
-                headers = headers,
-                proxies = self.proxy,
-                data = request)
-            response = result.json()
-            if response['data'] and response['status_code'] == 200:
-                print("Short Link:\t{}".format(response['data']['anon_shorten']['link']))
-            elif response['status_txt']:
-                errcode = response['status_txt'] or 'DEFAULT'
-                friendlyError = {
-                    'RATE_LIMIT_EXCEEDED': 'Whoa - you\'ve exceeded your quota. Create a free account to keep shortening.',
-                    'INVALID_ARG_URL': 'Unable to shorten that link. It is not a valid url.',
-                    'INVALID_ARG_LONGURL': 'Unable to shorten that link. It is not a valid url.',
-                    'ALREADY_A_BITLY_LINK': 'That is already a Bitly link',
-                    'UNKNOWN_ERROR': 'Woops. Something went wrong. Please try again.',
-                    'DEFAULT': 'An error occurred'
-                }
-                PBinCLIError("bitly: got error from API: {}".format(friendlyError[errcode]))
-        except Exception as ex:
-            PBinCLIError("bitly: unexcepted behavior: {}".format(ex))
