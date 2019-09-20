@@ -88,28 +88,34 @@ class Shortener:
         # we checking which service is used, because some services doesn't require
         # any authentication, or have only one domain on which it working
         if self.api == 'yourls':
-            if not settings['short_url']:
-                PBinCLIError("YOURLS: An API URL is required")
-            self.apiurl = settings['short_url']
-
-            if settings['short_user'] and settings['short_pass'] and settings['short_token'] is None:
-                self.auth_args = {'username': settings['short_user'], 'password': settings['short_pass']}
-            elif settings['short_user'] is None and settings['short_pass'] is None and settings['short_token']:
-                self.auth_args = {'signature': settings['short_token']}
-            elif settings['short_user'] is None and settings['short_pass'] is None and settings['short_token'] is None:
-                self.auth_args = {}
-            else:
-                PBinCLIError("YOURLS: either username and password or token are required. Otherwise set to default (None)")
+            self._yourls_init(settings)
         elif self.api == 'isgd' or self.api == 'vgd':
-            if self.api == 'isgd':
-                self.apiurl = 'https://is.gd/'
-            else:
-                self.apiurl = 'https://v.gd/'
-
-            self.useragent = 'Mozilla/5.0 (compatible; pbincli - https://github.com/r4sas/pbincli/)'
-
+            self._gd_init()
 
         self.session, self.proxy = _config_requests(settings)
+
+
+    def _yourls_init(self, settings):
+        if not settings['short_url']:
+            PBinCLIError("YOURLS: An API URL is required")
+        self.apiurl = settings['short_url']
+
+        if settings['short_user'] and settings['short_pass'] and settings['short_token'] is None:
+            self.auth_args = {'username': settings['short_user'], 'password': settings['short_pass']}
+        elif settings['short_user'] is None and settings['short_pass'] is None and settings['short_token']:
+            self.auth_args = {'signature': settings['short_token']}
+        elif settings['short_user'] is None and settings['short_pass'] is None and settings['short_token'] is None:
+            self.auth_args = {}
+        else:
+            PBinCLIError("YOURLS: either username and password or token are required. Otherwise set to default (None)")
+
+
+    def _gd_init(self):
+        if self.api == 'isgd':
+            self.apiurl = 'https://is.gd/'
+        else:
+            self.apiurl = 'https://v.gd/'
+        self.useragent = 'Mozilla/5.0 (compatible; pbincli - https://github.com/r4sas/pbincli/)'
 
 
     def getlink(self, url):
