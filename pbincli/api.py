@@ -98,8 +98,19 @@ class Shortener:
     def _yourls_init(self, settings):
         if not settings['short_url']:
             PBinCLIError("YOURLS: An API URL is required")
-        self.apiurl = settings['short_url']
 
+        # setting API URL
+        apiurl = settings['short_url']
+        if apiurl.endswith('/yourls-api.php'):
+            self.apiurl = apiurl
+        elif apiurl.endswith('/'):
+            self.apiurl = apiurl + 'yourls-api.php'
+        else:
+            PBinCLIError("YOURLS: Incorrect URL is provided.\n" +
+                "It must contain full address to 'yourls-api.php' script (like https://example.com/yourls-api.php)\n" +
+                "or just contain instance URL with '/' at the end (like https://example.com/)")
+
+        # validating for required credentials
         if settings['short_user'] and settings['short_pass'] and settings['short_token'] is None:
             self.auth_args = {'username': settings['short_user'], 'password': settings['short_pass']}
         elif settings['short_user'] is None and settings['short_pass'] is None and settings['short_token']:
