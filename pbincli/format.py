@@ -1,8 +1,27 @@
-from Crypto.Random import get_random_bytes
-from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
 from pbincli.utils import PBinCLIError
 import zlib
+
+# try import AES cipher and check if it has GCM mode (prevent usage of pycrypto)
+try:
+    from Crypto.Cipher import AES
+    from Crypto.Random import get_random_bytes
+
+    if not hasattr(AES, 'MODE_GCM'):
+        try:
+            from Cryptodome.Cipher import AES
+            from Cryptodome.Random import get_random_bytes
+        except ImportError:
+            PBinCLIError("AES GCM mode is not found in imported crypto module.\n" +
+                "That can happen if you have installed pycrypto.\n\n" +
+                "We tried to import pycryptodomex but it is not available.\n" +
+                "Please install it via pip, if you still need pycrypto, by running:\n" +
+                "\tpip install pycryptodomex\n" +
+                "... otherwise use separate python environment or uninstall pycrypto:\n" +
+                "\tpip uninstall pycrypto")
+except ImportError:
+    PBinCLIError("Unable import pycryptodome")
+
 
 CIPHER_ITERATION_COUNT = 100000
 CIPHER_SALT_BYTES = 8
@@ -10,6 +29,7 @@ CIPHER_BLOCK_BITS = 256
 CIPHER_BLOCK_BYTES = int(CIPHER_BLOCK_BITS/8)
 CIPHER_TAG_BITS = int(CIPHER_BLOCK_BITS/2)
 CIPHER_TAG_BYTES = int(CIPHER_TAG_BITS/8)
+
 
 class Paste:
     def __init__(self, debug=False):
@@ -233,8 +253,8 @@ class Paste:
     def _encryptV2(self):
         from pbincli.utils import json_encode
 
-        iv = get_random_bytes(CIPHER_TAG_BYTES)
-        salt = get_random_bytes(CIPHER_SALT_BYTES)
+        iv = get_random_bytes(CIPHER_TAG_BYTES)    # 16 bytes
+        salt = get_random_bytes(CIPHER_SALT_BYTES) # 8 bytes
         key = self.__deriveKey(salt)
 
         # prepare encryption authenticated data and message
@@ -260,6 +280,8 @@ class Paste:
 
         cipher = self.__initializeCipher(key, iv, adata)
         ciphertext, tag = cipher.encrypt_and_digest(self.__compress(json_encode(cipher_message)))
+
+        if self._debug: print("PBKDF2 Key:\t{}\nCipherText:\t{}\nCipherTag:\t{}".format(b64encode(key), b64encode(ciphertext), b64encode(tag)))
 
         self._data = {'v':2,'adata':adata,'ct':b64encode(ciphertext + tag).decode(),'meta':{'expire':self._expiration}}
 
