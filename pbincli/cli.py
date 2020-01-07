@@ -38,7 +38,8 @@ def main():
         choices=["zlib", "none"], help="set compression for paste (default: zlib). Note: works only on v2 paste format")
     # URL shortener
     send_parser.add_argument("-S", "--short", default=False, action="store_true", help="use URL shortener")
-    send_parser.add_argument("--short-api", default=argparse.SUPPRESS, action="store", choices=["tinyurl", "clckru", "isgd", "vgd", "cuttly", "yourls"], help="API used by shortener service")
+    send_parser.add_argument("--short-api", default=argparse.SUPPRESS, action="store",
+        choices=["tinyurl", "clckru", "isgd", "vgd", "cuttly", "yourls"], help="API used by shortener service")
     send_parser.add_argument("--short-url", default=argparse.SUPPRESS, help="URL of shortener service API")
     send_parser.add_argument("--short-user", default=argparse.SUPPRESS, help="Shortener username")
     send_parser.add_argument("--short-pass", default=argparse.SUPPRESS, help="Shortener password")
@@ -47,7 +48,8 @@ def main():
     send_parser.add_argument("-s", "--server", default=argparse.SUPPRESS, help="PrivateBin service URL (default: https://paste.i2pd.xyz/)")
     send_parser.add_argument("-x", "--proxy", default=argparse.SUPPRESS, help="Proxy server address (default: None)")
     send_parser.add_argument("--no-check-certificate", default=False, action="store_true", help="disable certificate validation")
-    send_parser.add_argument("--no-insecure-warning", default=False, action="store_true", help="suppress InsecureRequestWarning (only with --no-check-certificate)")
+    send_parser.add_argument("--no-insecure-warning", default=False, action="store_true",
+        help="suppress InsecureRequestWarning (only with --no-check-certificate)")
     #
     send_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
     send_parser.add_argument("--dry", default=False, action="store_true", help="invoke dry run")
@@ -61,7 +63,8 @@ def main():
     get_parser.add_argument("-s", "--server", default=argparse.SUPPRESS, help="PrivateBin service URL (default: https://paste.i2pd.xyz/)")
     get_parser.add_argument("-x", "--proxy", default=argparse.SUPPRESS, help="Proxy server address (default: None)")
     get_parser.add_argument("--no-check-certificate", default=False, action="store_true", help="disable certificate validation")
-    get_parser.add_argument("--no-insecure-warning", default=False, action="store_true", help="suppress InsecureRequestWarning (only with --no-check-certificate)")
+    get_parser.add_argument("--no-insecure-warning", default=False, action="store_true",
+        help="suppress InsecureRequestWarning (only with --no-check-certificate)")
     get_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
     get_parser.set_defaults(func=pbincli.actions.get)
 
@@ -72,7 +75,8 @@ def main():
     delete_parser.add_argument("-s", "--server", default=argparse.SUPPRESS, help="PrivateBin service URL (default: https://paste.i2pd.xyz/)")
     delete_parser.add_argument("-x", "--proxy", default=argparse.SUPPRESS, help="Proxy server address (default: None)")
     delete_parser.add_argument("--no-check-certificate", default=False, action="store_true", help="disable certificate validation")
-    delete_parser.add_argument("--no-insecure-warning", default=False, action="store_true", help="suppress InsecureRequestWarning (only with --no-check-certificate)")
+    delete_parser.add_argument("--no-insecure-warning", default=False, action="store_true",
+        help="suppress InsecureRequestWarning (only with --no-check-certificate)")
     delete_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
     delete_parser.set_defaults(func=pbincli.actions.delete)
 

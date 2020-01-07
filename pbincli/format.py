@@ -5,8 +5,6 @@ import zlib
 # try import AES cipher and check if it has GCM mode (prevent usage of pycrypto)
 try:
     from Crypto.Cipher import AES
-    from Crypto.Random import get_random_bytes
-
     if not hasattr(AES, 'MODE_GCM'):
         try:
             from Cryptodome.Cipher import AES
@@ -19,6 +17,8 @@ try:
                 "\tpip install pycryptodomex\n" +
                 "... otherwise use separate python environment or uninstall pycrypto:\n" +
                 "\tpip uninstall pycrypto")
+    else:
+        from Crypto.Random import get_random_bytes
 except ImportError:
     PBinCLIError("Unable import pycryptodome")
 
@@ -281,7 +281,8 @@ class Paste:
         cipher = self.__initializeCipher(key, iv, adata)
         ciphertext, tag = cipher.encrypt_and_digest(self.__compress(json_encode(cipher_message)))
 
-        if self._debug: print("PBKDF2 Key:\t{}\nCipherText:\t{}\nCipherTag:\t{}".format(b64encode(key), b64encode(ciphertext), b64encode(tag)))
+        if self._debug: print("PBKDF2 Key:\t{}\nCipherText:\t{}\nCipherTag:\t{}"
+            .format(b64encode(key), b64encode(ciphertext), b64encode(tag)))
 
         self._data = {'v':2,'adata':adata,'ct':b64encode(ciphertext + tag).decode(),'meta':{'expire':self._expiration}}
 
@@ -290,7 +291,8 @@ class Paste:
         from sjcl import SJCL
         from pbincli.utils import json_encode
 
-        self._data = {'expire':self._expiration,'formatter':self._formatter,'burnafterreading':int(self._burnafterreading),'opendiscussion':int(self._discussion)}
+        self._data = {'expire':self._expiration,'formatter':self._formatter,
+            'burnafterreading':int(self._burnafterreading),'opendiscussion':int(self._discussion)}
 
         password = self.__preparePassKey()
         if self._debug: print("Password:\t{}".format(password))
