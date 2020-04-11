@@ -31,9 +31,14 @@ setup(
     ],
     packages=['pbincli'],
     install_requires=install_requires,
+    python_requires='>=3',
     entry_points={
         'console_scripts': [
             'pbincli=pbincli.cli:main',
         ],
-    }
+    },
+    project_urls={
+        'Bug Reports': 'https://github.com/r4sas/PBinCLI/issues',
+        'Source': 'https://github.com/r4sas/PBinCLI/',
+    },
 )
