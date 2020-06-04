@@ -206,7 +206,7 @@ class Paste:
         # Get compression type from received paste
         self._compression = self._data['adata'][0][7]
 
-        cipher = self.__initializeCipher(key, iv, self._data['adata'], int(self._tag_bits /8 ))
+        cipher = self.__initializeCipher(key, iv, self._data['adata'], cipher_tag_bytes)
         # Cut the cipher text into message and tag
         cipher_text_tag = b64decode(self._data['ct'])
         cipher_text = cipher_text_tag[:-cipher_tag_bytes]
