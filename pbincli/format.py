@@ -26,9 +26,7 @@ except ImportError:
 CIPHER_ITERATION_COUNT = 100000
 CIPHER_SALT_BYTES = 8
 CIPHER_BLOCK_BITS = 256
-CIPHER_BLOCK_BYTES = int(CIPHER_BLOCK_BITS/8)
-CIPHER_TAG_BITS = int(CIPHER_BLOCK_BITS/2)
-CIPHER_TAG_BYTES = int(CIPHER_TAG_BITS/8)
+CIPHER_TAG_BITS = 128
 
 
 class Paste:
@@ -39,9 +37,13 @@ class Paste:
         self._text = ''
         self._attachment = ''
         self._attachment_name = ''
-        self._key = get_random_bytes(CIPHER_BLOCK_BYTES)
         self._password = ''
         self._debug = debug
+        self._iteration_count = CIPHER_ITERATION_COUNT
+        self._salt_bytes = CIPHER_SALT_BYTES
+        self._block_bits = CIPHER_BLOCK_BITS
+        self._tag_bits = CIPHER_TAG_BITS
+        self._key = get_random_bytes(int(self._block_bits / 8))
 
 
     def setVersion(self, version):
@@ -125,8 +127,8 @@ class Paste:
         return PBKDF2(
             self._key + self._password.encode(),
             salt,
-            dkLen = CIPHER_BLOCK_BYTES,
-            count = CIPHER_ITERATION_COUNT,
+            dkLen = int(self._block_bits / 8),
+            count = self._iteration_count,
             prf = lambda password, salt: HMAC.new(
                 password,
                 salt,
@@ -135,10 +137,10 @@ class Paste:
 
 
     @classmethod
-    def __initializeCipher(self, key, iv, adata):
+    def __initializeCipher(self, key, iv, adata, tagsize):
         from pbincli.utils import json_encode
 
-        cipher = AES.new(key, AES.MODE_GCM, nonce=iv, mac_len=CIPHER_TAG_BYTES)
+        cipher = AES.new(key, AES.MODE_GCM, nonce=iv, mac_len=tagsize)
         cipher.update(json_encode(adata))
         return cipher
 
@@ -193,16 +195,22 @@ class Paste:
         from json import loads as json_decode
         iv = b64decode(self._data['adata'][0][0])
         salt = b64decode(self._data['adata'][0][1])
+
+        self._iteration_count = self._data['adata'][0][2]
+        self._block_bits = self._data['adata'][0][3]
+        self._tag_bits = self._data['adata'][0][4]
+        cipher_tag_bytes = int(self._tag_bits / 8)
+
         key = self.__deriveKey(salt)
 
         # Get compression type from received paste
         self._compression = self._data['adata'][0][7]
 
-        cipher = self.__initializeCipher(key, iv, self._data['adata'])
+        cipher = self.__initializeCipher(key, iv, self._data['adata'], int(self._tag_bits /8 ))
         # Cut the cipher text into message and tag
         cipher_text_tag = b64decode(self._data['ct'])
-        cipher_text = cipher_text_tag[:-CIPHER_TAG_BYTES]
-        cipher_tag = cipher_text_tag[-CIPHER_TAG_BYTES:]
+        cipher_text = cipher_text_tag[:-cipher_tag_bytes]
+        cipher_tag = cipher_text_tag[-cipher_tag_bytes:]
         cipher_message = json_decode(self.__decompress(cipher.decrypt_and_verify(cipher_text, cipher_tag)).decode())
 
         self._text = cipher_message['paste'].encode()
@@ -253,8 +261,8 @@ class Paste:
     def _encryptV2(self):
         from pbincli.utils import json_encode
 
-        iv = get_random_bytes(CIPHER_TAG_BYTES)    # 16 bytes
-        salt = get_random_bytes(CIPHER_SALT_BYTES) # 8 bytes
+        iv = get_random_bytes(int(self._tag_bits / 8))
+        salt = get_random_bytes(self._salt_bytes)
         key = self.__deriveKey(salt)
 
         # prepare encryption authenticated data and message
@@ -262,9 +270,9 @@ class Paste:
             [
                 b64encode(iv).decode(),
                 b64encode(salt).decode(),
-                CIPHER_ITERATION_COUNT,
-                CIPHER_BLOCK_BITS,
-                CIPHER_TAG_BITS,
+                self._iteration_count,
+                self._block_bits,
+                self._tag_bits,
                 'aes',
                 'gcm',
                 self._compression
@@ -278,7 +286,7 @@ class Paste:
             cipher_message['attachment'] = self._attachment
             cipher_message['attachment_name'] = self._attachment_name
 
-        cipher = self.__initializeCipher(key, iv, adata)
+        cipher = self.__initializeCipher(key, iv, adata, int(self._tag_bits /8 ))
         ciphertext, tag = cipher.encrypt_and_digest(self.__compress(json_encode(cipher_message)))
 
         if self._debug: print("PBKDF2 Key:\t{}\nCipherText:\t{}\nCipherTag:\t{}"
