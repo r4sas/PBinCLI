@@ -131,3 +131,6 @@ venv.bak/
 
 # PyCharm project settings
 .idea
+
+# PBinCLI downloaded paste text
+paste-*.txt
