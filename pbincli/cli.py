@@ -18,7 +18,7 @@ def read_config(filename):
             try:
                 key, value = l.strip().split("=")
                 settings[key.strip()] = value.strip()
-            except ValueError as pe:
+            except ValueError:
                 PBinCLIError("Unable to parse config file, please check it for errors.")
 
     return settings
