@@ -1,5 +1,13 @@
 from pbincli.format import Paste
 from pbincli.utils import PBinCLIError
+import signal
+
+def signal_handler(sig, frame):
+    print('Keyboard interrupt received, terminating...')
+    exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+
 
 def send(args, api_client, settings=None):
     from pbincli.api import Shortener

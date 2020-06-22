@@ -17,7 +17,7 @@ setup(
     long_description_content_type='text/x-rst',
     author='R4SAS',
     author_email='r4sas@i2pmail.org',
-    url='https://github.com/r4sas/PBinCLI',
+    url='https://github.com/r4sas/PBinCLI/',
     keywords='privatebin cryptography security',
     license='MIT',
     classifiers=[

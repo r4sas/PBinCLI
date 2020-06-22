@@ -3,7 +3,7 @@ import os, sys, argparse
 
 import pbincli.actions
 from pbincli.api import PrivateBin
-from pbincli.utils import PBinCLIException, validate_url
+from pbincli.utils import PBinCLIException, PBinCLIError, validate_url
 
 CONFIG_PATHS = [os.path.join(".", "pbincli.conf", ),
        os.path.join(os.getenv("HOME") or "~", ".config", "pbincli", "pbincli.conf") ]
@@ -13,8 +13,13 @@ def read_config(filename):
     settings = {}
     with open(filename) as f:
         for l in f.readlines():
-            key, value = l.strip().split("=")
-            settings[key.strip()] = value.strip()
+            if len(l.strip()) == 0:
+                continue
+            try:
+                key, value = l.strip().split("=")
+                settings[key.strip()] = value.strip()
+            except ValueError as pe:
+                PBinCLIError("Unable to parse config file, please check it for errors.")
 
     return settings
 
