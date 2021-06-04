@@ -56,7 +56,8 @@ def main():
     send_parser.add_argument("--no-insecure-warning", default=False, action="store_true",
         help="suppress InsecureRequestWarning (only with --no-check-certificate)")
     ##
-    send_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
+    send_parser.add_argument("-v", "--verbose", default=False, action="store_true", help="enable verbose output")
+    send_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug output")
     send_parser.add_argument("--dry", default=False, action="store_true", help="invoke dry run")
     send_parser.add_argument("stdin", help="input paste text from stdin", nargs="?", type=argparse.FileType("r"), default=sys.stdin)
     send_parser.set_defaults(func=pbincli.actions.send)
@@ -72,7 +73,8 @@ def main():
     get_parser.add_argument("--no-insecure-warning", default=False, action="store_true",
         help="suppress InsecureRequestWarning (only with --no-check-certificate)")
     ##
-    get_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
+    get_parser.add_argument("-v", "--verbose", default=False, action="store_true", help="enable verbose output")
+    get_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug output")
     get_parser.set_defaults(func=pbincli.actions.get)
 
     # a delete command
@@ -86,7 +88,8 @@ def main():
     delete_parser.add_argument("--no-insecure-warning", default=False, action="store_true",
         help="suppress InsecureRequestWarning (only with --no-check-certificate)")
     ##
-    delete_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug")
+    delete_parser.add_argument("-v", "--verbose", default=False, action="store_true", help="enable verbose output")
+    delete_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug output")
     delete_parser.set_defaults(func=pbincli.actions.delete)
 
     # parse arguments

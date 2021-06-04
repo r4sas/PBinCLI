@@ -78,6 +78,10 @@ class PrivateBin:
                 '@value' in jsonldSchema['@context']['v']) \
             else 1
 
+    def getServer(self):
+        return self.server
+
+
 class Shortener:
     """Some parts of this class was taken from
     python-yourls (https://github.com/tflink/python-yourls/) library
