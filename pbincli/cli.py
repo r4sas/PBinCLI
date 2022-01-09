@@ -47,7 +47,7 @@ def main():
     ## URL shortener
     send_parser.add_argument("-S", "--short", default=False, action="store_true", help="use URL shortener")
     send_parser.add_argument("--short-api", default=argparse.SUPPRESS, action="store",
-        choices=["tinyurl", "clckru", "isgd", "vgd", "cuttly", "yourls"], help="API used by shortener service")
+        choices=["tinyurl", "clckru", "isgd", "vgd", "cuttly", "yourls", "custom"], help="API used by shortener service")
     send_parser.add_argument("--short-url", default=argparse.SUPPRESS, help="URL of shortener service API")
     send_parser.add_argument("--short-user", default=argparse.SUPPRESS, help="Shortener username")
     send_parser.add_argument("--short-pass", default=argparse.SUPPRESS, help="Shortener password")

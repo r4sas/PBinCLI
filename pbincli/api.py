@@ -95,6 +95,8 @@ class Shortener:
             self._yourls_init(settings)
         elif self.api == 'isgd' or self.api == 'vgd':
             self._gd_init()
+        elif self.api == 'custom':
+            self.apiurl == settings['short_url']
 
         self.session, self.proxy = _config_requests(settings)
 
@@ -142,6 +144,7 @@ class Shortener:
             'isgd': self._gd,
             'vgd': self._gd,
             'cuttly': self._cuttly
+            'custom': self._custom
         }
         # run function selected by choosen API
         servicesList[self.api](url)
@@ -250,3 +253,17 @@ class Shortener:
             print("Short Link:\t{}".format(result.text))
         except Exception as ex:
             PBinCLIError("cutt.ly: unexcepted behavior: {}".format(ex))
+
+
+    def _custom(self, url):
+        from urllib.parse import quote
+        qUrl = quote(url, safe="") # urlencoded paste url
+        rUrl = self.apiurl.replace("{{url}}", qUrl)
+
+        try:
+            result = self.session.get(
+                url = rUrl,
+                proxies = self.proxy)
+            print("Short Link:\t{}".format(result.text))
+        except Exception as ex:
+            PBinCLIError("Shorter: unexcepted behavior: {}".format(ex))
