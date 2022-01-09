@@ -96,8 +96,8 @@ def send(args, api_client, settings=None):
         # Print links to mirrors if present
         if settings['mirrors']:
             print("\nMirrors:")
-            list = settings['mirrors'].split(',')
-            for x in list:
+            urls = settings['mirrors'].split(',')
+            for x in urls:
                 print("\t\t{}?{}#{}".format(
                     validate_url(x),
                     result['id'],
