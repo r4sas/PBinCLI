@@ -254,6 +254,7 @@ class Paste:
         self._discussion = discussion
         self._expiration = expiration
 
+        if self._debug: print("[Enc] Starting encyptor…")
         if self._version == 2: self._encryptV2()
         else:                  self._encryptV1()
 
@@ -261,10 +262,13 @@ class Paste:
     def _encryptV2(self):
         from pbincli.utils import json_encode
 
+        if self._debug: print("[Enc] Preparing IV, Salt…")
         iv = get_random_bytes(int(self._tag_bits / 8))
         salt = get_random_bytes(self._salt_bytes)
+        if self._debug: print("[Enc] Deriving Key…")
         key = self.__deriveKey(salt)
 
+        if self._debug: print("[Enc] Preparing aData and message…")
         # prepare encryption authenticated data and message
         adata = [
             [
@@ -286,6 +290,7 @@ class Paste:
             cipher_message['attachment'] = self._attachment
             cipher_message['attachment_name'] = self._attachment_name
 
+        if self._debug: print("[Enc] Encrypting message…")
         cipher = self.__initializeCipher(key, iv, adata, int(self._tag_bits /8 ))
         ciphertext, tag = cipher.encrypt_and_digest(self.__compress(json_encode(cipher_message)))
 

@@ -1,5 +1,5 @@
 from pbincli.format import Paste
-from pbincli.utils import PBinCLIError
+from pbincli.utils import PBinCLIError, validate_url
 import signal
 
 def signal_handler(sig, frame):
@@ -58,6 +58,7 @@ def send(args, api_client, settings=None):
         discussion = args.discus,
         expiration = args.expire)
 
+    if args.verbose: print("Sending request to server…")
     request = paste.getJSON()
 
     if args.debug: print("Passphrase:\t{}\nRequest:\t{}".format(paste.getHash(), request))
@@ -74,13 +75,34 @@ def send(args, api_client, settings=None):
     if not result['status']: # return code is zero
         passphrase = paste.getHash()
 
-        print("Paste uploaded!\nPasteID:\t{}\nPassword:\t{}\nDelete token:\t{}\n\nLink:\t\t{}?{}#{}".format(
+        # Paste information
+        print("Paste uploaded!\nPasteID:\t{}\nPassword:\t{}\nDelete token:\t{}".format(
             result['id'],
             passphrase,
-            result['deletetoken'],
+            result['deletetoken']))
+
+        # Paste link
+        print("\nLink:\t\t{}?{}#{}".format(
             settings['server'],
             result['id'],
             passphrase))
+
+        # Paste deletion link
+        print("Delete Link:\t{}?pasteid={}&deletetoken={}".format(
+            settings['server'],
+            result['id'],
+            result['deletetoken']))
+
+        # Print links to mirrors if present
+        if settings['mirrors']:
+            print("\nMirrors:")
+            list = settings['mirrors'].split(',')
+            for x in list:
+                print("\t\t{}?{}#{}".format(
+                    validate_url(x),
+                    result['id'],
+                    passphrase))
+
     elif result['status']: # return code is other then zero
         PBinCLIError("Something went wrong…\nError:\t\t{}".format(result['message']))
     else: # or here no status field in response or it is empty

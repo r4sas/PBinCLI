@@ -5,8 +5,11 @@ import pbincli.actions
 from pbincli.api import PrivateBin
 from pbincli.utils import PBinCLIException, PBinCLIError, validate_url
 
-CONFIG_PATHS = [os.path.join(".", "pbincli.conf", ),
-       os.path.join(os.getenv("HOME") or "~", ".config", "pbincli", "pbincli.conf") ]
+CONFIG_PATHS = [
+    os.path.join(".", "pbincli.conf", ),
+    os.path.join(os.getenv("HOME") or "~", ".config", "pbincli", "pbincli.conf"),
+    os.path.join(os.getenv("APPDATA"), "pbincli", "pbincli.conf"),
+]
 
 def read_config(filename):
     """Read config variables from a file"""
@@ -56,6 +59,7 @@ def main():
     send_parser.add_argument("--no-insecure-warning", default=False, action="store_true",
         help="suppress InsecureRequestWarning (only with --no-check-certificate)")
     ##
+    send_parser.add_argument("-L", "--mirrors", default=argparse.SUPPRESS, help="Comma-separated list of mirrors of service with scheme (default: None)")
     send_parser.add_argument("-v", "--verbose", default=False, action="store_true", help="enable verbose output")
     send_parser.add_argument("-d", "--debug", default=False, action="store_true", help="enable debug output")
     send_parser.add_argument("--dry", default=False, action="store_true", help="invoke dry run")
@@ -97,6 +101,7 @@ def main():
 
     CONFIG = {
         'server': 'https://paste.i2pd.xyz/',
+        'mirrors': None, # real example for paste.i2pd.xyz: 'http://privatebin.ygg/,http://privatebin.i2p/'
         'proxy': None,
         'short_api': None,
         'short_url': None,
