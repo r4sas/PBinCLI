@@ -96,7 +96,7 @@ class Shortener:
         elif self.api == 'isgd' or self.api == 'vgd':
             self._gd_init()
         elif self.api == 'custom':
-            self.apiurl == settings['short_url']
+            self.apiurl = settings['short_url']
 
         self.session, self.proxy = _config_requests(settings)
 
@@ -143,7 +143,7 @@ class Shortener:
             'tinyurl': self._tinyurl,
             'isgd': self._gd,
             'vgd': self._gd,
-            'cuttly': self._cuttly
+            'cuttly': self._cuttly,
             'custom': self._custom
         }
         # run function selected by choosen API
