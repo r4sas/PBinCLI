@@ -10,8 +10,8 @@
    :alt: GitHub tag
 
 
-.. image:: https://api.codacy.com/project/badge/Grade/4f24f43356a84621bbd9078c4b3f1b70
-   :target: https://www.codacy.com/app/r4sas/PBinCLI?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=r4sas/PBinCLI&amp;utm_campaign=Badge_Grade
+.. image:: https://app.codacy.com/project/badge/Grade/4f24f43356a84621bbd9078c4b3f1b70
+   :target: https://www.codacy.com/gh/r4sas/PBinCLI/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=r4sas/PBinCLI&amp;utm_campaign=Badge_Grade
    :alt: Codacy Badge
 
 
