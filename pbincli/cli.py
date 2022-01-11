@@ -7,9 +7,13 @@ from pbincli.utils import PBinCLIException, PBinCLIError, validate_url
 
 CONFIG_PATHS = [
     os.path.join(".", "pbincli.conf", ),
-    os.path.join(os.getenv("HOME") or "~", ".config", "pbincli", "pbincli.conf"),
-    os.path.join(os.getenv("APPDATA"), "pbincli", "pbincli.conf"),
+    os.path.join(os.getenv("HOME") or "~", ".config", "pbincli", "pbincli.conf")
 ]
+
+if sys.platform == "win32":
+    CONFIG_PATHS.append(os.path.join(os.getenv("APPDATA"), "pbincli", "pbincli.conf"))
+elif sys.platform == "darwin":
+    CONFIG_PATHS.append(os.path.join(os.getenv("HOME") or "~", "Library", "Application Support", "pbincli", "pbincli.conf"))
 
 def read_config(filename):
     """Read config variables from a file"""
