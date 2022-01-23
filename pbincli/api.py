@@ -89,6 +89,9 @@ class Shortener:
     def __init__(self, settings=None):
         self.api = settings['short_api']
 
+        if self.api is None:
+            PBinCLIError("Unable to activate link shortener without short_api.")
+
         # we checking which service is used, because some services doesn't require
         # any authentication, or have only one domain on which it working
         if self.api == 'yourls':
@@ -256,6 +259,9 @@ class Shortener:
 
 
     def _custom(self, url):
+        if self.apiurl is None:
+            PBinCLIError("No short_url specified - link will not be shortened.")
+
         from urllib.parse import quote
         qUrl = quote(url, safe="") # urlencoded paste url
         rUrl = self.apiurl.replace("{{url}}", qUrl)
