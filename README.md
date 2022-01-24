@@ -22,7 +22,7 @@ Installation to system with pip3:
 pip3 install pbincli
 ```
 
-*Note: if you used installation with `virtualenv`, don't forget to activate it before usage: call `. /path/to/venv/bin/activate` in terminal*
+*Note*: if you used installation with `virtualenv`, don't forget to activate it before usage: call `. /path/to/venv/bin/activate` in terminal
 
 Configuration
 =====
