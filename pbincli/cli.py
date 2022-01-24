@@ -31,7 +31,7 @@ def read_config(filename):
     return settings
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Full-featured PrivateBin command-line client')
     subparsers = parser.add_subparsers(title="actions", help="List of commands")
 
     # a send command

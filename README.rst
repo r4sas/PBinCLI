@@ -65,20 +65,40 @@ All possible options for configuration file
    * - Option
      - Default
      - Possible value
-   * - 
+   * - server
+     - https://paste.i2pd.xyz/
+     - Domain ending with slash
+   * - mirrors
+     - None
+     - Domains separated with comma, like ``http://privatebin.ygg/,http://privatebin.i2p/``
+   * - proxy
+     - None
+     - Proxy address starting with scheme ``http://`` or ``socks5://``
+   * - short
+     - False
+     - True / False
+   * - short_api
+     - None
+     - ``tinyurl``\ , ``clckru``\ , ``isgd``\ , ``vgd``\ , ``cuttly``\ , ``yourls``\ , ``custom``
+   * - short_url
+     - None
+     - Domain name of shortener service for ``yourls``\ , or sortener URL (with required parameters) for ``custom``
+   * - short_user
+     - None
+     - Used only in ``yourls``
+   * - short_pass
+     - None
+     - Used only in ``yourls``
+   * - short_token
+     - None
+     - Used only in ``yourls``
+   * - no_check_certificate
+     - False
+     - True / False
+   * - no_insecure_warning
+     - False
+     - True / False
 
-
-server | https://paste.i2pd.xyz/ | Domain ending with slash |
-mirrors | None | Domains separated with comma, like ``http://privatebin.ygg/,http://privatebin.i2p/`` |
-proxy | None | Proxy address starting with scheme ``http://`` or ``socks5://`` |
-short | False | True / False |
-short_api | None | ``tinyurl``\ , ``clckru``\ , ``isgd``\ , ``vgd``\ , ``cuttly``\ , ``yourls``\ , ``custom`` |
-short_url | None | Domain name of shortener service for ``yourls``\ , or sortener URL (with required parameters) for ``custom`` |
-short_user | None | Used only in ``yourls`` |
-short_pass | None | Used only in ``yourls`` |
-short_token | None | Used only in ``yourls`` |
-no_check_certificate | False | True / False |
-no_insecure_warning | False | True / False |
 
 Usage
 =====
@@ -123,7 +143,7 @@ Sending
 
      pbincli send -q -f info.pdf
 
-**\ *Note*\ **\ : It is possible to set-up paste parameters such as burning after reading, expiritaion time, formatting, enabling discussions, and changing compression algorithm. Please refer to ``pbincli send -h`` output for more information.
+*Note*\ : It is possible to set-up paste parameters such as burning after reading, expiritaion time, formatting, enabling discussions, and changing compression algorithm. Please refer to ``pbincli send -h`` output for more information.
 
 Receiving
 ---------
@@ -177,5 +197,4 @@ Call it by running ``pastei2p`` in terminal.
 License
 =======
 
-This project is licensed under the MIT license, which can be found in the file
-`LICENSE <https://github.com/r4sas/PBinCLI/blob/master/LICENSE>`_ in the root of the project source code.
+This project is licensed under the MIT license, which can be found in the file `LICENSE <https://github.com/r4sas/PBinCLI/blob/master/LICENSE>`_ in the root of the project source code.
