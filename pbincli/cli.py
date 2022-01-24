@@ -3,7 +3,7 @@ import os, sys, argparse
 
 import pbincli.actions
 from pbincli.api import PrivateBin
-from pbincli.utils import PBinCLIException, PBinCLIError, validate_url
+from pbincli.utils import PBinCLIException, PBinCLIError, validate_url_ending
 
 CONFIG_PATHS = [
     os.path.join(".", "pbincli.conf", ),
@@ -57,7 +57,7 @@ def main():
     send_parser.add_argument("--short-pass", default=argparse.SUPPRESS, help="Shortener password")
     send_parser.add_argument("--short-token", default=argparse.SUPPRESS, help="Shortener token")
     ## Connection options
-    send_parser.add_argument("-s", "--server", default=argparse.SUPPRESS, help="PrivateBin service URL (default: https://paste.i2pd.xyz/)")
+    send_parser.add_argument("-s", "--server", default=argparse.SUPPRESS, help="Instance URL (default: https://paste.i2pd.xyz/)")
     send_parser.add_argument("-x", "--proxy", default=argparse.SUPPRESS, help="Proxy server address (default: None)")
     send_parser.add_argument("--no-check-certificate", default=False, action="store_true", help="disable certificate validation")
     send_parser.add_argument("--no-insecure-warning", default=False, action="store_true",
@@ -72,10 +72,10 @@ def main():
 
     # a get command
     get_parser = subparsers.add_parser("get", description="Get data from PrivateBin instance")
-    get_parser.add_argument("pasteinfo", help="example: aabb#cccddd")
+    get_parser.add_argument("pasteinfo", help="\"PasteID#Passphrase\" or full URL")
     get_parser.add_argument("-p", "--password", help="password for decrypting paste")
     ## Connection options
-    get_parser.add_argument("-s", "--server", default=argparse.SUPPRESS, help="PrivateBin service URL (default: https://paste.i2pd.xyz/)")
+    get_parser.add_argument("-s", "--server", default=argparse.SUPPRESS, help="Instance URL (default: https://paste.i2pd.xyz/, ignored if URL used in pasteinfo)")
     get_parser.add_argument("-x", "--proxy", default=argparse.SUPPRESS, help="Proxy server address (default: None)")
     get_parser.add_argument("--no-check-certificate", default=False, action="store_true", help="disable certificate validation")
     get_parser.add_argument("--no-insecure-warning", default=False, action="store_true",
@@ -90,7 +90,7 @@ def main():
     delete_parser.add_argument("-p", "--paste", required=True, help="paste id")
     delete_parser.add_argument("-t", "--token", required=True, help="paste deletion token")
     ## Connection options
-    delete_parser.add_argument("-s", "--server", default=argparse.SUPPRESS, help="PrivateBin service URL (default: https://paste.i2pd.xyz/)")
+    delete_parser.add_argument("-s", "--server", default=argparse.SUPPRESS, help="Instance URL (default: https://paste.i2pd.xyz/)")
     delete_parser.add_argument("-x", "--proxy", default=argparse.SUPPRESS, help="Proxy server address (default: None)")
     delete_parser.add_argument("--no-check-certificate", default=False, action="store_true", help="disable certificate validation")
     delete_parser.add_argument("--no-insecure-warning", default=False, action="store_true",
@@ -136,7 +136,7 @@ def main():
             CONFIG[key] = args_var[key]
 
     # Re-validate PrivateBin instance URL
-    CONFIG['server'] = validate_url(CONFIG['server'])
+    CONFIG['server'] = validate_url_ending(CONFIG['server'])
 
     api_client = PrivateBin(CONFIG)
 

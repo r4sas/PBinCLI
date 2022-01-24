@@ -1,5 +1,5 @@
 from pbincli.format import Paste
-from pbincli.utils import PBinCLIError, validate_url
+from pbincli.utils import PBinCLIError, validate_url_ending
 import signal
 
 def signal_handler(sig, frame):
@@ -99,7 +99,7 @@ def send(args, api_client, settings=None):
             urls = settings['mirrors'].split(',')
             for x in urls:
                 print("\t\t{}?{}#{}".format(
-                    validate_url(x),
+                    validate_url_ending(x),
                     result['id'],
                     passphrase))
 
@@ -117,10 +117,14 @@ def send(args, api_client, settings=None):
 
 
 def get(args, api_client, settings=None):
-    from pbincli.utils import check_writable, json_encode
+    from pbincli.utils import check_writable, json_encode, uri_validator
 
     try:
-        pasteid, passphrase = args.pasteinfo.split("#")
+        if uri_validator(args.pasteinfo):
+            api_client.server, pasteinfo = args.pasteinfo.split("?")
+            pasteid, passphrase = pasteinfo.split("#")
+        else:
+            pasteid, passphrase = args.pasteinfo.split("#")
     except ValueError:
         PBinCLIError("Provided info hasn't contain valid PasteID#Passphrase string")
 

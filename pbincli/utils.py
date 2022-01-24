@@ -30,7 +30,15 @@ def json_encode(s):
     return json.dumps(s, separators=(',',':')).encode()
 
 
-def validate_url(s):
+def validate_url_ending(s):
     if not s.endswith('/'):
         s = s + "/"
     return s
+
+def uri_validator(x):
+    from urllib.parse import urlparse
+    try:
+        result = urlparse(x)
+        return all([result.scheme, result.netloc])
+    except:
+        return False
