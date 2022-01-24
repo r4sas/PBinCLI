@@ -40,5 +40,5 @@ def uri_validator(x):
     try:
         result = urlparse(x)
         return all([result.scheme, result.netloc])
-    except:
+    except ValueError:
         return False
