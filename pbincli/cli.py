@@ -107,6 +107,7 @@ def main():
         'server': 'https://paste.i2pd.xyz/',
         'mirrors': None, # real example for paste.i2pd.xyz: 'http://privatebin.ygg/,http://privatebin.i2p/'
         'proxy': None,
+        'short': False,
         'short_api': None,
         'short_url': None,
         'short_user': None,
