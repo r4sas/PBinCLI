@@ -23,7 +23,7 @@ def read_config(filename):
             if len(l.strip()) == 0:
                 continue
             try:
-                key, value = l.strip().split("=")
+                key, value = l.strip().split("=", 1)
                 settings[key.strip()] = value.strip()
             except ValueError:
                 PBinCLIError("Unable to parse config file, please check it for errors.")
