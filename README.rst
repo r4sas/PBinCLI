@@ -74,6 +74,18 @@ All possible options for configuration file
    * - proxy
      - None
      - Proxy address starting with scheme ``http://`` or ``socks5://``
+   * - expire
+     - 1day
+     - 5min / 10min / 1hour / 1day / 1week / 1month / 1year / never
+   * - burn
+     - False
+     - True / False
+   * - discus
+     - False
+     - True / False
+   * - format
+     - plaintext
+     - plaintext / syntaxhighlighting / markdown
    * - short
      - False
      - True / False
@@ -82,7 +94,7 @@ All possible options for configuration file
      - ``tinyurl``\ , ``clckru``\ , ``isgd``\ , ``vgd``\ , ``cuttly``\ , ``yourls``\ , ``custom``
    * - short_url
      - None
-     - Domain name of shortener service for ``yourls``\ , or sortener URL (with required parameters) for ``custom``
+     - Domain name of shortener service for ``yourls``\ , or URL (with required parameters) for ``custom``
    * - short_user
      - None
      - Used only in ``yourls``
@@ -98,6 +110,9 @@ All possible options for configuration file
    * - no_insecure_warning
      - False
      - True / False
+   * - compression
+     - zlib
+     - zlib / none
 
 
 Usage
@@ -143,7 +158,10 @@ Sending
 
      pbincli send -q -f info.pdf
 
-*Note*\ : It is possible to set-up paste parameters such as burning after reading, expiritaion time, formatting, enabling discussions, and changing compression algorithm. Please refer to ``pbincli send -h`` output for more information.
+Other options
+^^^^^^^^^^^^^
+
+It is possible to set-up paste parameters such as burning after reading, expiritaion time, formatting, enabling discussions, and changing compression algorithm. Please refer to ``pbincli send -h`` output for more information.
 
 Receiving
 ---------

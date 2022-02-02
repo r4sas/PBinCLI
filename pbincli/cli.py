@@ -105,8 +105,12 @@ def main():
 
     CONFIG = {
         'server': 'https://paste.i2pd.xyz/',
-        'mirrors': None, # real example for paste.i2pd.xyz: 'http://privatebin.ygg/,http://privatebin.i2p/'
+        'mirrors': None,
         'proxy': None,
+        'expire': None,
+        'burn': False,
+        'discus': False,
+        'format': None,
         'short': False,
         'short_api': None,
         'short_url': None,
@@ -114,7 +118,8 @@ def main():
         'short_pass': None,
         'short_token': None,
         'no_check_certificate': False,
-        'no_insecure_warning': False
+        'no_insecure_warning': False,
+        'compression': None
     }
 
     # Configuration preference order:
