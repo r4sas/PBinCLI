@@ -4,40 +4,40 @@
 
 # PBinCLI
 
-PBinCLI is command line client for [PrivateBin](https://github.com/PrivateBin/PrivateBin/) written on Python 3.
+PBinCLI is a command line client for [PrivateBin](https://github.com/PrivateBin/PrivateBin/) written in Python 3.
 
-# Installing
+# Installation
 
-Installation inside `virtualenv`:
+Installing globally using pip3:
+```bash
+pip3 install pbincli
+```
+
+Installing with `virtualenv`:
 ```bash
 python3 -m virtualenv --python=python3 venv
 . venv/bin/activate
 pip install pbincli
 ```
 
-Installation to system with pip3:
-```bash
-pip3 install pbincli
-```
-
-*Note*: if you used installation with `virtualenv`, don't forget to activate it before usage: call `. /path/to/venv/bin/activate` in terminal
+*Note*: if you used `virtualenv` installation method, don't forget to activate your virtual environment before running the tool: call `. /path/to/venv/bin/activate` in terminal
 
 # Configuration
 
-By default pbincli configured to use `https://paste.i2pd.xyz/` for sending and receiving pastes. No proxy used by default.
+By default PBinCLI is configured to use `https://paste.i2pd.xyz/` for sending and receiving pastes. No proxy is used by default.
 
-You can create config file to use different settings.
+You can always create a config file to use different settings.
 
-Configuration file is searched in `~/.config/pbincli/pbincli.conf`, `%APPDATA%/pbincli/pbincli.conf` (Windows) and `~/Library/Application Support/pbincli/pbincli.conf` (MacOS)
+Configuration file is expected to be found in `~/.config/pbincli/pbincli.conf`, `%APPDATA%/pbincli/pbincli.conf` (Windows) and `~/Library/Application Support/pbincli/pbincli.conf` (MacOS)
 
-## Example contents
+## Example of config file content
 
 ```ini
 server=https://paste.i2pd.xyz/
 proxy=http://127.0.0.1:3128
 ```
 
-## All possible options for configuration file
+## List of OPTIONS available
 
 | Option               | Default                 | Possible value |
 |----------------------|-------------------------|----------------|
@@ -60,7 +60,7 @@ proxy=http://127.0.0.1:3128
 
 # Usage
 
-Tool available by command `pbincli`, help for every command can be called with `-h` option:
+PBinCLI tool is started with `pbincli` command. Detailed help on command usage is provided with `-h` option:
 ```bash
 pbincli {send|get|delete} -h
 ```
@@ -69,35 +69,35 @@ pbincli {send|get|delete} -h
 
 * Sending text:
 ```bash
-pbincli send -t "Hello! This is test paste!"
+pbincli send -t "Hello! This is a test paste!"
 ```
 
-* Use stdin input to read text for paste:
+* Using stdin input to read text into a paste:
 ```bash
 pbincli send - <<EOF
-Hello! This is test paste!
+Hello! This is a test paste!
 EOF
 ```
 
-* Sending file with text in paste:
+* Sending a file with text attached into a paste:
 ```bash
 pbincli send -f info.pdf -t "I'm sending my document."
 ```
 
-* Sending only file without any text:
+* Sending a file only with no text attached:
 ```bash
 pbincli send -q -f info.pdf
 ```
 
 ### Other options
 
-It is possible to set-up paste parameters such as burning after reading, expiritaion time, formatting, enabling discussions, and changing compression algorithm. Please refer to `pbincli send -h` output for more information.
+It is also possible to set-up paste parameters such as "burn after reading", expiritaion time, formatting, enabling discussions and changing compression algorithm. Please refer to `pbincli send -h` output for more information.
 
 ## Receiving
 
-To retrieve paste from server, use `get` command with paste info.
+To retrieve a paste from a server, you need to use `get` command with the paste info.
 
-It must be formated like `pasteID#Passphrase` or use full URL to paste. Example:
+Paste info must be formated as `pasteID#Passphrase` or just use full URL to a paste. Example:
 ```bash
 pbincli get xxx#yyy                        ### receive paste xxx from https://paste.i2pd.xyz/ by default
 pbincli get https://example.com/?xxx#yyy   ### receive paste xxx from https://example.com/
@@ -105,28 +105,28 @@ pbincli get https://example.com/?xxx#yyy   ### receive paste xxx from https://ex
 
 ## Deletion
 
-To delete paste from server, use `delete` command with required `-p` and `-t` options:
+To delete a paste from a server, use `delete` command with required `-p` and `-t` options:
 ```bash
 pbincli delete -p xxx -t deletetoken
 ```
 
-If you need to delete paste on different server that configured, use `-s` option with instance URL.
+If you need to delete a paste on different server than the configured one, use `-s` option together with the instance URL.
 
 # Additional examples
 
 Here you can find additional examples.
 
-## Usage with service available inside I2P
+## Usage with I2P enabled services
 
-Change settings to use server `http://privatebin.i2p/` and proxy `http://127.0.0.1:4444`. Here's example for configuration file:
+Change settings to set server to `http://privatebin.i2p/` and proxy to `http://127.0.0.1:4444`. Configuration file for this example is:
 ```ini
 server=http://privatebin.i2p/
 proxy=http://127.0.0.1:4444
 ```
 
-## Using tool with aliases
+## Using aliases
 
-Example of alias to send paste from `stdin` direclty to I2P service:
+Example of alias to send a paste from `stdin` direclty to I2P service:
 ```bash
 alias pastei2p="echo 'paste the text to stdin' && pbincli send -s http://privatebin.i2p/ -x http://127.0.0.1:4444 -"
 ```
