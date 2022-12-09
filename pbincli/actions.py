@@ -1,4 +1,4 @@
-import signal
+import signal, sys
 from urllib.parse import parse_qsl
 
 from pbincli.api import Shortener
@@ -8,7 +8,7 @@ from pbincli.utils import PBinCLIError, check_writable, json_encode, uri_validat
 
 def signal_handler(sig, frame):
     print('Keyboard interrupt received, terminating…')
-    exit(0)
+    sys.exit(0)
 
 
 signal.signal(signal.SIGINT, signal_handler)
@@ -68,7 +68,7 @@ def send(args, api_client, settings=None):
     if args.debug: print("Passphrase:\t{}\nRequest:\t{}".format(paste.getHash(), request))
 
     # If we use dry option, exit now
-    if args.dry: exit(0)
+    if args.dry: sys.exit(0)
 
     print("Uploading paste…")
     result = api_client.post(request)

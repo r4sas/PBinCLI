@@ -6,7 +6,7 @@ class PBinCLIException(Exception):
 
 def PBinCLIError(message):
     print("PBinCLI Error: {}".format(message), file=sys.stderr)
-    exit(1)
+    sys.exit(1)
 
 
 def path_leaf(path):
