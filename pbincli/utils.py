@@ -36,9 +36,10 @@ def validate_url_ending(s):
     return s
 
 def uri_validator(x):
-    from urllib.parse import urlparse
+    from urllib.parse import urlsplit
     try:
-        result = urlparse(x)
-        return all([result.scheme, result.netloc])
+        result = urlsplit(x)
+        isuri = all([result.scheme, result.netloc])
+        return result, isuri
     except ValueError:
         return False

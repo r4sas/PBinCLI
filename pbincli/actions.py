@@ -1,16 +1,20 @@
-from pbincli.format import Paste
-from pbincli.utils import PBinCLIError, validate_url_ending
 import signal
+from urllib.parse import urlparse, parse_qsl
+
+from pbincli.api import Shortener
+from pbincli.format import Paste
+from pbincli.utils import PBinCLIError, check_writable, json_encode, uri_validator, validate_url_ending
+
 
 def signal_handler(sig, frame):
     print('Keyboard interrupt received, terminating…')
     exit(0)
 
+
 signal.signal(signal.SIGINT, signal_handler)
 
 
 def send(args, api_client, settings=None):
-    from pbincli.api import Shortener
     if args.short:
         shortener = Shortener(settings)
 
@@ -117,19 +121,17 @@ def send(args, api_client, settings=None):
 
 
 def get(args, api_client, settings=None):
-    from pbincli.utils import check_writable, json_encode, uri_validator
+    parseduri, isuri = uri_validator(args.pasteinfo)
 
-    try:
-        if uri_validator(args.pasteinfo):
-            api_client.server, pasteinfo = args.pasteinfo.split("?")
-            pasteid, passphrase = pasteinfo.split("#")
-        else:
-            pasteid, passphrase = args.pasteinfo.split("#")
-    except ValueError:
-        PBinCLIError("Provided info hasn't contain valid PasteID#Passphrase string")
-
-    if not (pasteid and passphrase):
-        PBinCLIError("Incorrect request")
+    if isuri and parseduri.query and parseduri.fragment:
+        api_client.server = args.pasteinfo.split("?")[0]
+        pasteid = parseduri.query
+        passphrase = parseduri.fragment
+    elif parseduri.path and parseduri.path != "/" and parseduri.fragment:
+        pasteid = parseduri.path
+        passphrase = parseduri.fragment
+    else:
+        PBinCLIError("Provided info hasn't contain valid URL or PasteID#Passphrase string")
 
     if args.verbose: print("Used server: {}".format(api_client.getServer()))
     if args.debug: print("PasteID:\t{}\nPassphrase:\t{}".format(pasteid, passphrase))
@@ -194,10 +196,19 @@ def get(args, api_client, settings=None):
 
 
 def delete(args, api_client, settings=None):
-    from pbincli.utils import json_encode
+    parseduri, isuri = uri_validator(args.pasteinfo)
 
-    pasteid = args.paste
-    token = args.token
+    if isuri:
+        api_client.server = args.pasteinfo.split("?")[0]
+        query = dict(parse_qsl(parseduri.query))
+    else:
+        query = dict(parse_qsl(args.pasteinfo))
+
+    if 'pasteid' in query and 'deletetoken' in query:
+        pasteid = query['pasteid']
+        token = query['deletetoken']
+    else:
+        PBinCLIError("Provided info hasn't contain required information")
 
     if args.verbose: print("Used server: {}".format(api_client.getServer()))
     if args.debug: print("PasteID:\t{}\nToken:\t\t{}".format(pasteid, token))
