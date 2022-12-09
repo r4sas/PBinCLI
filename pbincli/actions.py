@@ -1,5 +1,5 @@
 import signal
-from urllib.parse import urlparse, parse_qsl
+from urllib.parse import parse_qsl
 
 from pbincli.api import Shortener
 from pbincli.format import Paste
