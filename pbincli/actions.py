@@ -10,12 +10,11 @@ def signal_handler(sig, frame):
     print('Keyboard interrupt received, terminating…')
     sys.exit(0)
 
-
 signal.signal(signal.SIGINT, signal_handler)
 
 
 def send(args, api_client, settings=None):
-    if args.short:
+    if settings['short']:
         shortener = Shortener(settings)
 
     if not args.notext:
@@ -42,7 +41,7 @@ def send(args, api_client, settings=None):
     if args.verbose: print("Filling paste with data…")
     # set compression type, works only on v2 pastes
     if version == 2:
-        paste.setCompression(args.compression)
+        paste.setCompression(settings['compression'])
 
     # add text in paste (if it provided)
     paste.setText(text)
@@ -57,10 +56,10 @@ def send(args, api_client, settings=None):
 
     if args.verbose: print("Encrypting paste…")
     paste.encrypt(
-        formatter = args.format,
-        burnafterreading = args.burn,
-        discussion = args.discus,
-        expiration = args.expire)
+        formatter = settings['format'],
+        burnafterreading = settings['burn'],
+        discussion = settings['discus'],
+        expiration = settings['expire'])
 
     if args.verbose: print("Sending request to server…")
     request = paste.getJSON()
@@ -112,7 +111,7 @@ def send(args, api_client, settings=None):
     else: # or here no status field in response or it is empty
         PBinCLIError("Something went wrong…\nError: Empty response.")
 
-    if args.short:
+    if settings['short']:
         print("\nQuerying URL shortening service…")
         shortener.getlink("{}?{}#{}".format(
             settings['server'],

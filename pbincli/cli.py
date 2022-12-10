@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os, sys, argparse
+from distutils.util import strtobool
 
 import pbincli.actions
 from pbincli.api import PrivateBin
@@ -15,6 +16,7 @@ if sys.platform == "win32":
 elif sys.platform == "darwin":
     CONFIG_PATHS.append(os.path.join(os.getenv("HOME") or "~", "Library", "Application Support", "pbincli", "pbincli.conf"))
 
+
 def read_config(filename):
     """Read config variables from a file"""
     settings = {}
@@ -24,11 +26,14 @@ def read_config(filename):
                 continue
             try:
                 key, value = l.strip().split("=", 1)
-                settings[key.strip()] = value.strip()
+                if value.strip().lower() in ['true', 'false']:
+                    settings[key.strip()] = bool(strtobool(value.strip()))
+                else:
+                    settings[key.strip()] = value.strip()
             except ValueError:
                 PBinCLIError("Unable to parse config file, please check it for errors.")
-
     return settings
+
 
 def main():
     parser = argparse.ArgumentParser(description='Full-featured PrivateBin command-line client')
@@ -41,15 +46,15 @@ def main():
     send_parser.add_argument("-p", "--password", help="Password for encrypting paste")
     send_parser.add_argument("-E", "--expire", default="1day", action="store",
         choices=["5min", "10min", "1hour", "1day", "1week", "1month", "1year", "never"], help="Paste lifetime (default: 1day)")
-    send_parser.add_argument("-B", "--burn", default=False, action="store_true", help="Set \"Burn after reading\" flag")
-    send_parser.add_argument("-D", "--discus", default=False, action="store_true", help="Open discussion for sent paste")
+    send_parser.add_argument("-B", "--burn", default=argparse.SUPPRESS, action="store_true", help="Set \"Burn after reading\" flag")
+    send_parser.add_argument("-D", "--discus", default=argparse.SUPPRESS, action="store_true", help="Open discussion for sent paste")
     send_parser.add_argument("-F", "--format", default="plaintext", action="store",
         choices=["plaintext", "syntaxhighlighting", "markdown"], help="Format of text (default: plaintext)")
     send_parser.add_argument("-q", "--notext", default=False, action="store_true", help="Don't send text in paste")
     send_parser.add_argument("-c", "--compression", default="zlib", action="store",
         choices=["zlib", "none"], help="Set compression for paste (default: zlib). Note: works only on v2 paste format")
     ## URL shortener
-    send_parser.add_argument("-S", "--short", default=False, action="store_true", help="Use URL shortener")
+    send_parser.add_argument("-S", "--short", default=argparse.SUPPRESS, action="store_true", help="Use URL shortener")
     send_parser.add_argument("--short-api", default=argparse.SUPPRESS, action="store",
         choices=["tinyurl", "clckru", "isgd", "vgd", "cuttly", "yourls", "custom"], help="API used by shortener service")
     send_parser.add_argument("--short-url", default=argparse.SUPPRESS, help="URL of shortener service API")
@@ -59,8 +64,8 @@ def main():
     ## Connection options
     send_parser.add_argument("-s", "--server", default=argparse.SUPPRESS, help="Instance URL (default: https://paste.i2pd.xyz/)")
     send_parser.add_argument("-x", "--proxy", default=argparse.SUPPRESS, help="Proxy server address (default: None)")
-    send_parser.add_argument("--no-check-certificate", default=False, action="store_true", help="Disable certificate validation")
-    send_parser.add_argument("--no-insecure-warning", default=False, action="store_true",
+    send_parser.add_argument("--no-check-certificate", default=argparse.SUPPRESS, action="store_true", help="Disable certificate validation")
+    send_parser.add_argument("--no-insecure-warning", default=argparse.SUPPRESS, action="store_true",
         help="Suppress InsecureRequestWarning (only with --no-check-certificate)")
     ##
     send_parser.add_argument("-L", "--mirrors", default=argparse.SUPPRESS, help="Comma-separated list of mirrors of service with scheme (default: None)")
@@ -77,8 +82,8 @@ def main():
     ## Connection options
     get_parser.add_argument("-s", "--server", default=argparse.SUPPRESS, help="Instance URL (default: https://paste.i2pd.xyz/, ignored if URL used in pasteinfo)")
     get_parser.add_argument("-x", "--proxy", default=argparse.SUPPRESS, help="Proxy server address (default: None)")
-    get_parser.add_argument("--no-check-certificate", default=False, action="store_true", help="Disable certificate validation")
-    get_parser.add_argument("--no-insecure-warning", default=False, action="store_true",
+    get_parser.add_argument("--no-check-certificate", default=argparse.SUPPRESS, action="store_true", help="Disable certificate validation")
+    get_parser.add_argument("--no-insecure-warning", default=argparse.SUPPRESS, action="store_true",
         help="Suppress InsecureRequestWarning (only with --no-check-certificate)")
     ##
     get_parser.add_argument("-v", "--verbose", default=False, action="store_true", help="Enable verbose output")
@@ -91,8 +96,8 @@ def main():
     ## Connection options
     delete_parser.add_argument("-s", "--server", default=argparse.SUPPRESS, help="Instance URL (default: https://paste.i2pd.xyz/)")
     delete_parser.add_argument("-x", "--proxy", default=argparse.SUPPRESS, help="Proxy server address (default: None)")
-    delete_parser.add_argument("--no-check-certificate", default=False, action="store_true", help="Disable certificate validation")
-    delete_parser.add_argument("--no-insecure-warning", default=False, action="store_true",
+    delete_parser.add_argument("--no-check-certificate", default=argparse.SUPPRESS, action="store_true", help="Disable certificate validation")
+    delete_parser.add_argument("--no-insecure-warning", default=argparse.SUPPRESS, action="store_true",
         help="Suppress InsecureRequestWarning (only with --no-check-certificate)")
     ##
     delete_parser.add_argument("-v", "--verbose", default=False, action="store_true", help="Enable verbose output")
@@ -102,11 +107,12 @@ def main():
     # parse arguments
     args = parser.parse_args()
 
+    # default configuration
     CONFIG = {
         'server': 'https://paste.i2pd.xyz/',
         'mirrors': None,
         'proxy': None,
-        'expire': None,
+        'expire': '1day',
         'burn': False,
         'discus': False,
         'format': None,
@@ -125,11 +131,13 @@ def main():
     # 1. Command line switches
     # 2. Environment variables
     # 3. Configuration file
-    # 4. Default values below
+    # 4. Defaults above
 
     for p in CONFIG_PATHS:
         if os.path.exists(p):
-            CONFIG.update(read_config(p))
+            fileconfig = read_config(p)
+            if args.debug: print("Configuration readed from file:\t{}".format(fileconfig))
+            CONFIG.update(fileconfig)
             break
 
     for key in CONFIG.keys():
@@ -143,6 +151,7 @@ def main():
     # Re-validate PrivateBin instance URL
     CONFIG['server'] = validate_url_ending(CONFIG['server'])
 
+    if args.debug: print("Whole configuration:\t\t{}".format(CONFIG))
     api_client = PrivateBin(CONFIG)
 
     if hasattr(args, "func"):
