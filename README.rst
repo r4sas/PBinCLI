@@ -172,17 +172,18 @@ Paste info must be formated as ``pasteID#Passphrase`` or just use full URL to a 
 
 .. code-block:: bash
 
-   pbincli get xxx#yyy                        ### receive paste xxx from https://paste.i2pd.xyz/ by default
-   pbincli get https://example.com/?xxx#yyy   ### receive paste xxx from https://example.com/
+   pbincli get "xxx#yyy"                        ### receive paste xxx from https://paste.i2pd.xyz/ by default
+   pbincli get "https://example.com/?xxx#yyy"   ### receive paste xxx from https://example.com/
 
 Deletion
 --------
 
-To delete a paste from a server, use ``delete`` command with required ``-p`` and ``-t`` options:
+To delete a paste from a server, use ``delete`` command with paste info:
 
 .. code-block:: bash
 
-   pbincli delete -p xxx -t deletetoken
+   pbincli delete "pasteid=xxx&deletetoken=yyy"                        ### delete paste xxx from https://paste.i2pd.xyz/ by default
+   pbincli delete "https://example.com/?pasteid=xxx&deletetoken=yyy"   ### delete paste xxx from https://example.com/
 
 If you need to delete a paste on different server than the configured one, use ``-s`` option together with the instance URL.
 
