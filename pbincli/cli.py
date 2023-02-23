@@ -37,6 +37,8 @@ def read_config(filename):
 
 def main():
     parser = argparse.ArgumentParser(description='Full-featured PrivateBin command-line client')
+    parser.add_argument("-d", "--debug", default=False, action="store_true", help="Enable debug output")
+
     subparsers = parser.add_subparsers(title="actions", help="List of commands")
 
     # a send command
@@ -136,7 +138,7 @@ def main():
     for p in CONFIG_PATHS:
         if os.path.exists(p):
             fileconfig = read_config(p)
-            if args.debug: print("Configuration readed from file:\t{}".format(fileconfig))
+            if args.debug: print("Configuration readed from file:\n{}".format(fileconfig))
             CONFIG.update(fileconfig)
             break
 
@@ -151,7 +153,7 @@ def main():
     # Re-validate PrivateBin instance URL
     CONFIG['server'] = validate_url_ending(CONFIG['server'])
 
-    if args.debug: print("Whole configuration:\t\t{}".format(CONFIG))
+    if args.debug: print("Whole configuration:\n{}\n".format(CONFIG))
     api_client = PrivateBin(CONFIG)
 
     if hasattr(args, "func"):
