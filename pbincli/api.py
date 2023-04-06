@@ -4,7 +4,14 @@ from pbincli.utils import PBinCLIError
 
 def _config_requests(settings=None):
     if settings['proxy']:
-        proxy = {settings['proxy'].split('://')[0]: settings['proxy']}
+        scheme = settings['proxy'].split('://')[0]
+        if (scheme.startswith("socks")):
+            proxy = {
+                "http":  settings['proxy'],
+                "https": settings['proxy']
+            }
+        else:
+            proxy = {scheme: settings['proxy']}
     else:
         proxy = {}
 
