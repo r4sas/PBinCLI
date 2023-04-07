@@ -7,9 +7,9 @@ jobs:
     name: Binary for windows
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Setup python 3.8
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: 3.8
     - name: Build executable with pyinstaller
@@ -18,7 +18,7 @@ jobs:
         pip install .
         pip install pyinstaller pywin32-ctypes
         pyinstaller pbincli.spec
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: pbincli-windows
         path: dist/*
