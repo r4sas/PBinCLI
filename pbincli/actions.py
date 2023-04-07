@@ -3,7 +3,7 @@ from urllib.parse import parse_qsl
 
 from pbincli.api import Shortener
 from pbincli.format import Paste
-from pbincli.utils import PBinCLIError, check_writable, json_encode, uri_validator, validate_url_ending
+from pbincli.utils import PBinCLIError, check_writable, json_encode, uri_validator, validate_url_ending, validate_path_ending
 
 
 def signal_handler(sig, frame):
@@ -166,21 +166,30 @@ def get(args, api_client, settings=None):
 
         if len(text):
             if args.debug: print("{}\n".format(text.decode()))
-            filename = "paste-" + pasteid + ".txt"
-            print("Found text in paste. Saving it to {}".format(filename))
+            if settings['output']:
+                paste_path = validate_path_ending(settings['output']) + "paste-" + pasteid + ".txt"
+            else:
+                paste_path = "paste-" + pasteid + ".txt"
 
-            check_writable(filename)
-            with open(filename, "wb") as f:
+            print("Found text in paste. Saving it to {}".format(paste_path))
+
+            check_writable(paste_path)
+            with open(paste_path, "wb") as f:
                 f.write(text)
                 f.close()
 
         attachment, attachment_name = paste.getAttachment()
 
         if attachment:
-            print("Found file, attached to paste. Saving it to {}\n".format(attachment_name))
+            if settings['output']:
+                attachment_path = validate_path_ending(settings['output']) + attachment_name
+            else:
+                attachment_path = attachment_name
 
-            check_writable(attachment_name)
-            with open(attachment_name, "wb") as f:
+            print("Found file, attached to paste. Saving it to {}\n".format(attachment_path))
+
+            check_writable(attachment_path)
+            with open(attachment_path, "wb") as f:
                 f.write(attachment)
                 f.close()
 

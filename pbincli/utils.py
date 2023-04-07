@@ -1,4 +1,5 @@
 import json, ntpath, os, sys
+from platform import system
 
 class PBinCLIException(Exception):
     pass
@@ -33,6 +34,16 @@ def json_encode(s):
 def validate_url_ending(s):
     if not s.endswith('/'):
         s = s + "/"
+    return s
+
+def validate_path_ending(s):
+    if system() == 'Windows':
+        slash = '\\'
+    else:
+        slash = '/'
+
+    if not s.endswith(slash):
+        s = s + slash
     return s
 
 def uri_validator(x):

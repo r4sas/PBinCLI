@@ -81,6 +81,7 @@ def main():
     get_parser = subparsers.add_parser("get", description="Get data from PrivateBin instance")
     get_parser.add_argument("pasteinfo", help="\"PasteID#Passphrase\" or full URL")
     get_parser.add_argument("-p", "--password", help="Password for decrypting paste")
+    get_parser.add_argument("-o", "--output", default=argparse.SUPPRESS, help="Path to directory where decoded paste data will be saved")
     ## Connection options
     get_parser.add_argument("-s", "--server", default=argparse.SUPPRESS, help="Instance URL (default: https://paste.i2pd.xyz/, ignored if URL used in pasteinfo)")
     get_parser.add_argument("-x", "--proxy", default=argparse.SUPPRESS, help="Proxy server address (default: None)")
@@ -124,6 +125,7 @@ def main():
         'short_user': None,
         'short_pass': None,
         'short_token': None,
+        'output': None,
         'no_check_certificate': False,
         'no_insecure_warning': False,
         'compression': None
