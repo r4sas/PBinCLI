@@ -104,6 +104,9 @@ List of OPTIONS available
    * - short_token
      - None
      - Used only in ``yourls``
+   * - output
+     - None
+     - Path to the directory where the received data will be saved
    * - no_check_certificate
      - False
      - True / False

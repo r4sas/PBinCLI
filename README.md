@@ -54,6 +54,7 @@ proxy=http://127.0.0.1:3128
 | short_user           | None                    | Used only in `yourls` |
 | short_pass           | None                    | Used only in `yourls` |
 | short_token          | None                    | Used only in `yourls` |
+| output               | None                    | Path to the directory where the received data will be saved |
 | no_check_certificate | False                   | True / False |
 | no_insecure_warning  | False                   | True / False |
 | compression          | zlib                    | zlib / none |
