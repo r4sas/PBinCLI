@@ -116,6 +116,18 @@ List of OPTIONS available
    * - compression
      - zlib
      - zlib / none
+   * - auth
+     - None
+     - ``basic``\ , ``custom``
+   * - auth_user
+     - None
+     - Basic authorization username
+   * - auth_pass
+     - None
+     - Basic authorization password
+   * - auth_custom
+     - None
+     - Custom authorization headers in JSON format, like ``{'Authorization': 'Bearer token'}``
 
 
 Usage

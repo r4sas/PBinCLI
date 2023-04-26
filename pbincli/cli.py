@@ -69,6 +69,12 @@ def main():
     send_parser.add_argument("--no-check-certificate", default=argparse.SUPPRESS, action="store_true", help="Disable certificate validation")
     send_parser.add_argument("--no-insecure-warning", default=argparse.SUPPRESS, action="store_true",
         help="Suppress InsecureRequestWarning (only with --no-check-certificate)")
+    ## Authorization options
+    send_parser.add_argument("--auth", default=argparse.SUPPRESS, action="store",
+        choices=["basic", "custom"], help="Server authorization method (default: none)")
+    send_parser.add_argument("--auth-user", default=argparse.SUPPRESS, help="Basic authorization username")
+    send_parser.add_argument("--auth-pass", default=argparse.SUPPRESS, help="Basic authorization password")
+    send_parser.add_argument("--auth-custom", default=argparse.SUPPRESS, help="Custom authorization header in JSON format")
     ##
     send_parser.add_argument("-L", "--mirrors", default=argparse.SUPPRESS, help="Comma-separated list of mirrors of service with scheme (default: None)")
     send_parser.add_argument("-v", "--verbose", default=False, action="store_true", help="Enable verbose output")
@@ -88,6 +94,12 @@ def main():
     get_parser.add_argument("--no-check-certificate", default=argparse.SUPPRESS, action="store_true", help="Disable certificate validation")
     get_parser.add_argument("--no-insecure-warning", default=argparse.SUPPRESS, action="store_true",
         help="Suppress InsecureRequestWarning (only with --no-check-certificate)")
+    ## Authorization options
+    get_parser.add_argument("--auth", default=argparse.SUPPRESS, action="store",
+        choices=["basic", "custom"], help="Server authorization method (default: none)")
+    get_parser.add_argument("--auth-user", default=argparse.SUPPRESS, help="Basic authorization username")
+    get_parser.add_argument("--auth-pass", default=argparse.SUPPRESS, help="Basic authorization password")
+    get_parser.add_argument("--auth-custom", default=argparse.SUPPRESS, help="Custom authorization header in JSON format")
     ##
     get_parser.add_argument("-v", "--verbose", default=False, action="store_true", help="Enable verbose output")
     get_parser.add_argument("-d", "--debug", default=False, action="store_true", help="Enable debug output")
@@ -102,6 +114,11 @@ def main():
     delete_parser.add_argument("--no-check-certificate", default=argparse.SUPPRESS, action="store_true", help="Disable certificate validation")
     delete_parser.add_argument("--no-insecure-warning", default=argparse.SUPPRESS, action="store_true",
         help="Suppress InsecureRequestWarning (only with --no-check-certificate)")
+    delete_parser.add_argument("--auth", default=argparse.SUPPRESS, action="store",
+        choices=["basic", "custom"], help="Server authorization method (default: none)")
+    delete_parser.add_argument("--auth-user", default=argparse.SUPPRESS, help="Basic authorization username")
+    delete_parser.add_argument("--auth-pass", default=argparse.SUPPRESS, help="Basic authorization password")
+    delete_parser.add_argument("--auth-custom", default=argparse.SUPPRESS, help="Custom authorization header in JSON format")
     ##
     delete_parser.add_argument("-v", "--verbose", default=False, action="store_true", help="Enable verbose output")
     delete_parser.add_argument("-d", "--debug", default=False, action="store_true", help="Enable debug output")
@@ -128,7 +145,11 @@ def main():
         'output': None,
         'no_check_certificate': False,
         'no_insecure_warning': False,
-        'compression': None
+        'compression': None,
+        'auth': None,
+        'auth_user': None,
+        'auth_pass': None,
+        'auth_custom': None
     }
 
     # Configuration preference order:

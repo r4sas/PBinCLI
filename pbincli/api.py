@@ -32,6 +32,16 @@ class PrivateBin:
 
         self.session, self.proxy = _config_requests(settings)
 
+        if settings['auth']:
+            if settings['auth'] == 'basic' and settings['auth_user'] and settings['auth_pass']:
+                self.session.auth = (settings['auth_user'], settings['auth_pass'])
+            elif settings['auth'] == 'custom' and settings['auth_custom']:
+                from json import loads as json_loads
+                auth = json_loads(settings['auth_custom'])
+                self.headers.update(auth)
+            else:
+                PBinCLIError("Incorrect authorization configuration")
+
     def post(self, request):
         result = self.session.post(
             url = self.server,
