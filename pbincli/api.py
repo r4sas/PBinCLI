@@ -2,19 +2,7 @@ import requests
 from requests import HTTPError
 from pbincli.utils import PBinCLIError
 
-def _config_requests(settings=None):
-    if settings['proxy']:
-        scheme = settings['proxy'].split('://')[0]
-        if (scheme.startswith("socks")):
-            proxy = {
-                "http":  settings['proxy'],
-                "https": settings['proxy']
-            }
-        else:
-            proxy = {scheme: settings['proxy']}
-    else:
-        proxy = {}
-
+def _config_requests(settings=None, shortener=False):
     if settings['no_insecure_warning']:
         from requests.packages.urllib3.exceptions import InsecureRequestWarning
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
@@ -22,7 +10,27 @@ def _config_requests(settings=None):
     session = requests.Session()
     session.verify = not settings['no_check_certificate']
 
-    return session, proxy
+    if settings['auth'] and not shortener: # do not leak PrivateBin authorization to shortener services
+        if settings['auth'] == 'basic' and settings['auth_user'] and settings['auth_pass']:
+            session.auth = (settings['auth_user'], settings['auth_pass'])
+        elif settings['auth'] == 'custom' and settings['auth_custom']:
+            from json import loads as json_loads
+            auth = json_loads(settings['auth_custom'])
+            session.headers.update(auth)
+        else:
+            PBinCLIError("Incorrect authorization configuration")
+
+    if settings['proxy']:
+        scheme = settings['proxy'].split('://')[0]
+        if (scheme.startswith("socks")):
+            session.proxies.update({
+                "http":  settings['proxy'],
+                "https": settings['proxy']
+            })
+        else:
+            session.proxies.update({scheme: settings['proxy']})
+
+    return session
 
 
 class PrivateBin:
@@ -30,23 +38,12 @@ class PrivateBin:
         self.server = settings['server']
         self.headers = {'X-Requested-With': 'JSONHttpRequest'}
 
-        self.session, self.proxy = _config_requests(settings)
-
-        if settings['auth']:
-            if settings['auth'] == 'basic' and settings['auth_user'] and settings['auth_pass']:
-                self.session.auth = (settings['auth_user'], settings['auth_pass'])
-            elif settings['auth'] == 'custom' and settings['auth_custom']:
-                from json import loads as json_loads
-                auth = json_loads(settings['auth_custom'])
-                self.headers.update(auth)
-            else:
-                PBinCLIError("Incorrect authorization configuration")
+        self.session = _config_requests(settings, False)
 
     def post(self, request):
         result = self.session.post(
             url = self.server,
             headers = self.headers,
-            proxies = self.proxy,
             data = request)
 
         try:
@@ -58,8 +55,7 @@ class PrivateBin:
     def get(self, request):
         return self.session.get(
             url = self.server + "?" + request,
-            headers = self.headers,
-            proxies = self.proxy).json()
+            headers = self.headers).json()
 
 
     def delete(self, request):
@@ -69,7 +65,6 @@ class PrivateBin:
             result = self.session.post(
                 url = self.server,
                 headers = self.headers,
-                proxies = self.proxy,
                 data = request).json()
         except ValueError:
             # unable parse response as json because it can be empty (1.2), so simulate correct answer
@@ -88,7 +83,7 @@ class PrivateBin:
     def getVersion(self):
         jsonldSchema = self.session.get(
             url = self.server + '?jsonld=paste',
-            proxies = self.proxy).json()
+            headers = self.headers).json()
         return jsonldSchema['@context']['v']['@value'] \
             if ('@context' in jsonldSchema and
                 'v' in jsonldSchema['@context'] and
@@ -118,7 +113,7 @@ class Shortener:
         elif self.api == 'custom':
             self.apiurl = settings['short_url']
 
-        self.session, self.proxy = _config_requests(settings)
+        self.session = _config_requests(settings, True)
 
 
     def _yourls_init(self, settings):
@@ -176,7 +171,6 @@ class Shortener:
 
         result = self.session.post(
             url = self.apiurl,
-            proxies = self.proxy,
             data = request)
 
         try:
@@ -208,7 +202,6 @@ class Shortener:
         try:
             result = self.session.post(
                 url = "https://clck.ru/--",
-                proxies = self.proxy,
                 data = request)
             print("Short Link:\t{}".format(result.text))
         except Exception as ex:
@@ -221,7 +214,6 @@ class Shortener:
         try:
             result = self.session.post(
                 url = "https://tinyurl.com/api-create.php",
-                proxies = self.proxy,
                 data = request)
             print("Short Link:\t{}".format(result.text))
         except Exception as ex:
@@ -240,7 +232,6 @@ class Shortener:
             result = self.session.post(
                 url = self.apiurl + "create.php",
                 headers = headers,
-                proxies = self.proxy,
                 data = request)
 
             response = result.json()
@@ -268,7 +259,6 @@ class Shortener:
         try:
             result = self.session.post(
                 url = "https://cutt.ly/scripts/shortenUrl.php",
-                proxies = self.proxy,
                 data = request)
             print("Short Link:\t{}".format(result.text))
         except Exception as ex:
@@ -285,8 +275,7 @@ class Shortener:
 
         try:
             result = self.session.get(
-                url = rUrl,
-                proxies = self.proxy)
+                url = rUrl)
             print("Short Link:\t{}".format(result.text))
         except Exception as ex:
             PBinCLIError("Shorter: unexcepted behavior: {}".format(ex))
