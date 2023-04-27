@@ -81,14 +81,19 @@ class PrivateBin:
 
 
     def getVersion(self):
-        jsonldSchema = self.session.get(
+        result = self.session.get(
             url = self.server + '?jsonld=paste',
-            headers = self.headers).json()
-        return jsonldSchema['@context']['v']['@value'] \
-            if ('@context' in jsonldSchema and
-                'v' in jsonldSchema['@context'] and
-                '@value' in jsonldSchema['@context']['v']) \
-            else 1
+            headers = self.headers)
+        try:
+            jsonldSchema = result.json()
+            return jsonldSchema['@context']['v']['@value'] \
+                if ('@context' in jsonldSchema and
+                    'v' in jsonldSchema['@context'] and
+                    '@value' in jsonldSchema['@context']['v']) \
+                else 1
+        except ValueError:
+            PBinCLIError("Unable parse response as json. Received (size = {}):\n{}".format(len(result.text), result.text))
+
 
     def getServer(self):
         return self.server
