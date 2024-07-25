@@ -20,7 +20,11 @@ try:
     else:
         from Crypto.Random import get_random_bytes
 except ImportError:
-    PBinCLIError("Unable import pycryptodome")
+    try:
+        from Cryptodome.Cipher import AES
+        from Cryptodome.Random import get_random_bytes
+    except ImportError:
+        PBinCLIError("Unable import pycryptodome")
 
 
 CIPHER_ITERATION_COUNT = 100000
@@ -120,8 +124,15 @@ class Paste:
 
 
     def __deriveKey(self, salt):
-        from Crypto.Protocol.KDF import PBKDF2
-        from Crypto.Hash import HMAC, SHA256
+        try:
+            from Crypto.Protocol.KDF import PBKDF2
+            from Crypto.Hash import HMAC, SHA256
+        except ModuleNotFoundError:
+            try:
+                from Cryptodome.Protocol.KDF import PBKDF2
+                from Cryptodome.Hash import HMAC, SHA256
+            except ImportError:
+                PBinCLIError("Unable import pycryptodome")
 
         # Key derivation, using PBKDF2 and SHA256 HMAC
         return PBKDF2(
