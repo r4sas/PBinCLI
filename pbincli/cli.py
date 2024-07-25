@@ -46,7 +46,7 @@ def main():
     send_parser.add_argument("-t", "--text", help="Text in quotes. Ignored if used stdin. If not used, forcefully used stdin")
     send_parser.add_argument("-f", "--file", help="Example: image.jpg or full path to file")
     send_parser.add_argument("-p", "--password", help="Password for encrypting paste")
-    send_parser.add_argument("-E", "--expire", default="argparse.SUPPRESS, action="store",
+    send_parser.add_argument("-E", "--expire", default=argparse.SUPPRESS, action="store",
         choices=["5min", "10min", "1hour", "1day", "1week", "1month", "1year", "never"], help="Paste lifetime (default: 1day)")
     send_parser.add_argument("-B", "--burn", default=argparse.SUPPRESS, action="store_true", help="Set \"Burn after reading\" flag")
     send_parser.add_argument("-D", "--discus", default=argparse.SUPPRESS, action="store_true", help="Open discussion for sent paste")
