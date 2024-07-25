@@ -2,3 +2,4 @@ pycryptodome
 sjcl
 base58
 requests
+argcomplete

@@ -1,6 +1,9 @@
 #!/usr/bin/env python
+# PYTHON_ARGCOMPLETE_OK
 import os, sys, argparse
 from distutils.util import strtobool
+
+import argcomplete
 
 import pbincli.actions
 from pbincli.api import PrivateBin
@@ -123,6 +126,9 @@ def main():
     delete_parser.add_argument("-v", "--verbose", default=False, action="store_true", help="Enable verbose output")
     delete_parser.add_argument("-d", "--debug", default=False, action="store_true", help="Enable debug output")
     delete_parser.set_defaults(func=pbincli.actions.delete)
+
+    # Add argcomplete trigger
+    argcomplete.autocomplete(parser)
 
     # parse arguments
     args = parser.parse_args()
