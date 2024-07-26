@@ -1,4 +1,4 @@
-import signal, sys
+import json, signal, sys
 from urllib.parse import parse_qsl
 
 from pbincli.api import Shortener
@@ -117,7 +117,7 @@ def send(args, api_client, settings=None):
                         passphrase))
                 except Exception as ex:
                     response['result']['short_error'] = ex
-            print(json_encode(response))
+            print(json.dumps(response))
             sys.exit(0)
 
         else:
