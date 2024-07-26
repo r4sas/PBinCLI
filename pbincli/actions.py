@@ -21,14 +21,14 @@ def send(args, api_client, settings=None):
         if args.text:
             text = args.text
         elif args.stdin:
-            if not args.json: print("Reading text from stdin…")
+            if not settings['json']: print("Reading text from stdin…")
             text = args.stdin.read()
     elif not args.file:
         PBinCLIError("Nothing to send!")
     else:
         text = ""
 
-    if not args.json: print("Preparing paste…")
+    if not settings['json']: print("Preparing paste…")
     paste = Paste(args.debug)
 
     if args.verbose: print("Used server: {}".format(api_client.getServer()))
@@ -68,10 +68,10 @@ def send(args, api_client, settings=None):
 
     # If we use dry option, exit now
     if args.dry:
-        if not args.json: print("Dry mode: paste will not be uploaded. Exiting…")
+        if not settings['json']: print("Dry mode: paste will not be uploaded. Exiting…")
         sys.exit(0)
 
-    if not args.json: print("Uploading paste…")
+    if not settings['json']: print("Uploading paste…")
     result = api_client.post(request)
 
     if args.debug: print("Response:\t{}\n".format(result))
@@ -80,7 +80,7 @@ def send(args, api_client, settings=None):
     if not result['status']: # return code is zero
         passphrase = paste.getHash()
 
-        if args.json: # JSON output
+        if settings['json']: # JSON output
             response = {
                 'status': result['status'],
                 'result': {
