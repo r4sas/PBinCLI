@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # PYTHON_ARGCOMPLETE_OK
 import os, sys, argparse
-from distutils.util import strtobool
 
 import argcomplete
 
@@ -18,6 +17,16 @@ if sys.platform == "win32":
     CONFIG_PATHS.append(os.path.join(os.getenv("APPDATA"), "pbincli", "pbincli.conf"))
 elif sys.platform == "darwin":
     CONFIG_PATHS.append(os.path.join(os.getenv("HOME") or "~", "Library", "Application Support", "pbincli", "pbincli.conf"))
+
+
+def strtobool(value):
+    try:
+        return {
+            'y': True, 'yes': True, 't': True, 'true': True, 'on': True, '1': True,
+            'n': False, 'no': False, 'f': False, 'false': False, 'off': False, '0': False,
+        }[str(value).lower()]
+    except KeyError:
+        raise ValueError('"{}" is not a valid bool value'.format(value))
 
 
 def read_config(filename):
