@@ -90,7 +90,8 @@ def main():
     ##
     send_parser.add_argument("-L", "--mirrors", default=argparse.SUPPRESS, help="Comma-separated list of mirrors of service with scheme (default: None)")
     send_parser.add_argument("-v", "--verbose", default=False, action="store_true", help="Enable verbose output")
-    send_parser.add_argument("-d", "--debug", default=False, action="store_true", help="Enable debug output")
+    send_parser.add_argument("-d", "--debug", default=False, action="store_true", help="Enable debug output. Includes verbose output")
+    send_parser.add_argument("--json", default=False, action="store_true", help="Print result in JSON format")
     send_parser.add_argument("--dry", default=False, action="store_true", help="Invoke dry run")
     send_parser.add_argument("stdin", help="Input paste text from stdin", nargs="?", type=argparse.FileType("r"), default=sys.stdin)
     send_parser.set_defaults(func=pbincli.actions.send)
@@ -114,7 +115,8 @@ def main():
     get_parser.add_argument("--auth-custom", default=argparse.SUPPRESS, help="Custom authorization header in JSON format")
     ##
     get_parser.add_argument("-v", "--verbose", default=False, action="store_true", help="Enable verbose output")
-    get_parser.add_argument("-d", "--debug", default=False, action="store_true", help="Enable debug output")
+    get_parser.add_argument("-d", "--debug", default=False, action="store_true", help="Enable debug output. Includes verbose output")
+    get_parser.add_argument("--json", default=False, action="store_true", help="Print result in JSON format")
     get_parser.set_defaults(func=pbincli.actions.get)
 
     # a delete command
@@ -133,7 +135,8 @@ def main():
     delete_parser.add_argument("--auth-custom", default=argparse.SUPPRESS, help="Custom authorization header in JSON format")
     ##
     delete_parser.add_argument("-v", "--verbose", default=False, action="store_true", help="Enable verbose output")
-    delete_parser.add_argument("-d", "--debug", default=False, action="store_true", help="Enable debug output")
+    delete_parser.add_argument("-d", "--debug", default=False, action="store_true", help="Enable debug output. Includes verbose output")
+    delete_parser.add_argument("--json", default=False, action="store_true", help="Print result in JSON format")
     delete_parser.set_defaults(func=pbincli.actions.delete)
 
     # Add argcomplete trigger
@@ -164,7 +167,8 @@ def main():
         'auth': None,
         'auth_user': None,
         'auth_pass': None,
-        'auth_custom': None
+        'auth_custom': None,
+        'json': False
     }
 
     # Configuration preference order:
@@ -191,7 +195,9 @@ def main():
     # Re-validate PrivateBin instance URL
     CONFIG['server'] = validate_url_ending(CONFIG['server'])
 
-    if args.debug: print("Whole configuration:\n{}\n".format(CONFIG))
+    if args.debug:
+        print("Whole configuration:\n{}\n".format(CONFIG))
+        args.verbose = True
     api_client = PrivateBin(CONFIG)
 
     if hasattr(args, "func"):

@@ -167,7 +167,7 @@ class Shortener:
             'custom': self._custom
         }
         # run function selected by choosen API
-        servicesList[self.api](url)
+        return servicesList[self.api](url)
 
 
     def _yourls(self,url):
@@ -196,7 +196,7 @@ class Shortener:
                 if not 'shorturl' in response:
                     PBinCLIError("YOURLS: Unknown error: {}".format(response['message']))
                 else:
-                    print("Short Link:\t{}".format(response['shorturl']))
+                    return response['shorturl']
             else:
                 PBinCLIError("YOURLS: No status, statusCode or message fields in response! Received:\n{}".format(response))
 
@@ -208,7 +208,7 @@ class Shortener:
             result = self.session.post(
                 url = "https://clck.ru/--",
                 data = request)
-            print("Short Link:\t{}".format(result.text))
+            return result.text
         except Exception as ex:
             PBinCLIError("clck.ru: unexcepted behavior: {}".format(ex))
 
@@ -220,7 +220,7 @@ class Shortener:
             result = self.session.post(
                 url = "https://tinyurl.com/api-create.php",
                 data = request)
-            print("Short Link:\t{}".format(result.text))
+            return result.text
         except Exception as ex:
             PBinCLIError("TinyURL: unexcepted behavior: {}".format(ex))
 
@@ -242,7 +242,7 @@ class Shortener:
             response = result.json()
 
             if 'shorturl' in response:
-                print("Short Link:\t{}".format(response['shorturl']))
+                return response['shorturl']
             else:
                 PBinCLIError("{}: got error {} from API: {}".format(
                     "is.gd" if self.api == 'isgd' else 'v.gd',
@@ -265,7 +265,7 @@ class Shortener:
             result = self.session.post(
                 url = "https://cutt.ly/scripts/shortenUrl.php",
                 data = request)
-            print("Short Link:\t{}".format(result.text))
+            return result.text
         except Exception as ex:
             PBinCLIError("cutt.ly: unexcepted behavior: {}".format(ex))
 
@@ -281,6 +281,6 @@ class Shortener:
         try:
             result = self.session.get(
                 url = rUrl)
-            print("Short Link:\t{}".format(result.text))
+            return result.text
         except Exception as ex:
             PBinCLIError("Shorter: unexcepted behavior: {}".format(ex))

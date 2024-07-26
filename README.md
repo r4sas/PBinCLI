@@ -62,6 +62,7 @@ proxy=http://127.0.0.1:3128
 | auth_user            | None                    | Basic authorization username |
 | auth_pass            | None                    | Basic authorization password |
 | auth_custom          | None                    | Custom authorization headers in JSON format, like `{'Authorization': 'Bearer token'}` |
+| json                 | False                   | Print sending result in JSON format |
 
 # Usage
 

@@ -3,3 +3,4 @@ sjcl
 base58
 requests
 argcomplete
+pysocks

@@ -128,6 +128,9 @@ List of OPTIONS available
    * - auth_custom
      - None
      - Custom authorization headers in JSON format, like ``{'Authorization': 'Bearer token'}``
+   * - json
+     - False
+     - Print sending result in JSON format
 
 
 Usage

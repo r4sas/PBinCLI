@@ -21,20 +21,20 @@ def send(args, api_client, settings=None):
         if args.text:
             text = args.text
         elif args.stdin:
-            print("Reading text from stdin…")
+            if not args.json: print("Reading text from stdin…")
             text = args.stdin.read()
     elif not args.file:
         PBinCLIError("Nothing to send!")
     else:
         text = ""
 
-    print("Preparing paste…")
+    if not args.json: print("Preparing paste…")
     paste = Paste(args.debug)
 
     if args.verbose: print("Used server: {}".format(api_client.getServer()))
 
     # get from server supported paste format version and update object
-    if args.verbose: print("Getting supported paste format version from server…")
+    if args.debug: print("Getting supported paste format version from server…")
     version = api_client.getVersion()
     paste.setVersion(version)
 
@@ -61,15 +61,17 @@ def send(args, api_client, settings=None):
         discussion = settings['discus'],
         expiration = settings['expire'])
 
-    if args.verbose: print("Sending request to server…")
+    if args.verbose: print("Preparing request to server…")
     request = paste.getJSON()
 
     if args.debug: print("Passphrase:\t{}\nRequest:\t{}".format(paste.getHash(), request))
 
     # If we use dry option, exit now
-    if args.dry: sys.exit(0)
+    if args.dry:
+        if not args.json: print("Dry mode: paste will not be uploaded. Exiting…")
+        sys.exit(0)
 
-    print("Uploading paste…")
+    if not args.json: print("Uploading paste…")
     result = api_client.post(request)
 
     if args.debug: print("Response:\t{}\n".format(result))
@@ -78,46 +80,91 @@ def send(args, api_client, settings=None):
     if not result['status']: # return code is zero
         passphrase = paste.getHash()
 
-        # Paste information
-        print("Paste uploaded!\nPasteID:\t{}\nPassword:\t{}\nDelete token:\t{}".format(
-            result['id'],
-            passphrase,
-            result['deletetoken']))
+        if args.json: # JSON output
+            response = {
+                'status': result['status'],
+                'result': {
+                    'id': result['id'],
+                    'password': passphrase,
+                    'deletetoken': result['deletetoken'],
+                    'link': "{}?{}#{}".format(
+                        settings['server'],
+                        result['id'],
+                        passphrase),
+                    'deletelink': "{}?pasteid={}&deletetoken={}".format(
+                        settings['server'],
+                        result['id'],
+                        result['deletetoken']),
+                }
+            }
 
-        # Paste link
-        print("\nLink:\t\t{}?{}#{}".format(
-            settings['server'],
-            result['id'],
-            passphrase))
+            if settings['mirrors']:
+                urls = settings['mirrors'].split(',')
+                mirrors = []
+                for x in urls:
+                    mirrors.append("{}?{}#{}".format(
+                        validate_url_ending(x),
+                        result['id'],
+                        passphrase)
+                    )
+                response['result']['mirrors'] = mirrors
 
-        # Paste deletion link
-        print("Delete Link:\t{}?pasteid={}&deletetoken={}".format(
-            settings['server'],
-            result['id'],
-            result['deletetoken']))
+            if settings['short']:
+                try:
+                    response['result']['short'] = shortener.getlink("{}?{}#{}".format(
+                        settings['server'],
+                        result['id'],
+                        passphrase))
+                except Exception as ex:
+                    response['result']['short_error'] = ex
+            print(json_encode(response))
+            sys.exit(0)
 
-        # Print links to mirrors if present
-        if settings['mirrors']:
-            print("\nMirrors:")
-            urls = settings['mirrors'].split(',')
-            for x in urls:
-                print("\t\t{}?{}#{}".format(
-                    validate_url_ending(x),
-                    result['id'],
-                    passphrase))
+        else:
+            # Paste information
+            print("Paste uploaded!\nPasteID:\t{}\nPassword:\t{}\nDelete token:\t{}".format(
+                result['id'],
+                passphrase,
+                result['deletetoken']))
+
+            # Paste link
+            print("\nLink:\t\t{}?{}#{}".format(
+                settings['server'],
+                result['id'],
+                passphrase))
+
+            # Paste deletion link
+            print("Delete Link:\t{}?pasteid={}&deletetoken={}".format(
+                settings['server'],
+                result['id'],
+                result['deletetoken']))
+
+            # Print links to mirrors if present
+            if settings['mirrors']:
+                print("\nMirrors:")
+                urls = settings['mirrors'].split(',')
+                for x in urls:
+                    print("\t\t{}?{}#{}".format(
+                        validate_url_ending(x),
+                        result['id'],
+                        passphrase))
+
+            if settings['short']:
+                print("\nQuerying URL shortening service…")
+                try:
+                    link = shortener.getlink("{}?{}#{}".format(
+                        settings['server'],
+                        result['id'],
+                        passphrase))
+                    print("Short Link:\t{}".format(link))
+                except Exception as ex:
+                    PBinCLIError("Something went wrong…\nError:\t\t{}".format(ex))
+            sys.exit(0)
 
     elif result['status']: # return code is other then zero
         PBinCLIError("Something went wrong…\nError:\t\t{}".format(result['message']))
     else: # or here no status field in response or it is empty
         PBinCLIError("Something went wrong…\nError: Empty response.")
-
-    if settings['short']:
-        print("\nQuerying URL shortening service…")
-        shortener.getlink("{}?{}#{}".format(
-            settings['server'],
-            result['id'],
-            passphrase))
-
 
 def get(args, api_client, settings=None):
     parseduri, isuri = uri_validator(args.pasteinfo)
