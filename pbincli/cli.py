@@ -88,6 +88,7 @@ def main():
     send_parser.add_argument("--auth-pass", default=argparse.SUPPRESS, help="Basic authorization password")
     send_parser.add_argument("--auth-custom", default=argparse.SUPPRESS, help="Custom authorization header in JSON format")
     ##
+    send_parser.add_argument("-R", "--random-server", default=argparse.SUPPRESS, help="Comma-separated list of servers with scheme, randomly chosen to to send paste to (default: None)")
     send_parser.add_argument("-L", "--mirrors", default=argparse.SUPPRESS, help="Comma-separated list of mirrors of service with scheme (default: None)")
     send_parser.add_argument("-v", "--verbose", default=False, action="store_true", help="Enable verbose output")
     send_parser.add_argument("-d", "--debug", default=False, action="store_true", help="Enable debug output. Includes verbose output")
@@ -146,6 +147,7 @@ def main():
     # default configuration
     CONFIG = {
         'server': 'https://paste.i2pd.xyz/',
+        'random_server': None,
         'mirrors': None,
         'proxy': None,
         'expire': '1day',
@@ -190,8 +192,13 @@ def main():
         if key in args_var:
             CONFIG[key] = args_var[key]
 
-    # Re-validate PrivateBin instance URL
-    CONFIG['server'] = validate_url_ending(CONFIG['server'])
+    # Set server and re-validate instance URL
+    if CONFIG['random_server']:
+        import random
+        url_arr = CONFIG['random_server'].split(',')
+        CONFIG['server'] = validate_url_ending(random.choice(url_arr))
+    else:
+        CONFIG['server'] = validate_url_ending(CONFIG['server'])
 
     if args.debug:
         print("Whole configuration:\n{}\n".format(CONFIG))
