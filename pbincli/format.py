@@ -120,6 +120,8 @@ class Paste:
             from base58 import b58decode
             self._key = b58decode(passphrase)
         else:
+            if (len(passphrase) % 4 != 0):
+                PBinCLIError("Incorrect passphrase! Maybe you have stripped trailing \"=\"?")
             self._key = b64decode(passphrase)
 
 
