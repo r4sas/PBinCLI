@@ -68,6 +68,9 @@ List of OPTIONS available
    * - server
      - https://paste.i2pd.xyz/
      - Domain ending with slash
+   * - random_server
+     - None
+     - Domains separated with comma, selected randomly
    * - mirrors
      - None
      - Domains separated with comma, like ``http://privatebin.ygg/,http://privatebin.i2p/``

@@ -42,6 +42,7 @@ proxy=http://127.0.0.1:3128
 | Option               | Default                 | Possible value |
 |----------------------|-------------------------|----------------|
 | server               | https://paste.i2pd.xyz/ | Domain ending with slash |
+| random_server        | None                    | Domains separated with comma, selected randomly |
 | mirrors              | None                    | Domains separated with comma, like `http://privatebin.ygg/,http://privatebin.i2p/` |
 | proxy                | None                    | Proxy address starting with scheme `http://` or `socks5://` |
 | expire               | 1day                    | 5min / 10min / 1hour / 1day / 1week / 1month / 1year / never |
