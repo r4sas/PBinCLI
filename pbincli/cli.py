@@ -194,9 +194,9 @@ def main():
 
     # Set server and re-validate instance URL
     if CONFIG['random_server']:
-        import random
+        import secrets
         url_arr = CONFIG['random_server'].split(',')
-        CONFIG['server'] = validate_url_ending(random.choice(url_arr))
+        CONFIG['server'] = validate_url_ending(secrets.choice(url_arr))
     else:
         CONFIG['server'] = validate_url_ending(CONFIG['server'])
 
