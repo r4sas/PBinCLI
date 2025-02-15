@@ -18,7 +18,7 @@ jobs:
         pip install .
         pip install pyinstaller pywin32-ctypes
         pyinstaller pbincli.spec
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: pbincli-windows
         path: dist/*
