@@ -29,7 +29,7 @@ def _config_requests(settings=None, shortener=False):
         else:
             PBinCLIError("Incorrect authorization configuration")
 
-    if settings["proxy"]:
+    if settings.get("proxy"):
         scheme = settings["proxy"].split("://")[0]
         if scheme.startswith("socks"):
             session.proxies.update(
